@@ -24,7 +24,6 @@ const Home = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen w-[1920px]  bg-opacity-30 bg-black ">
-      <ComponenteMio />
       <header className="bg-white shadow-md shadow-black bg-opacity-90">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <h1 className="text-6xl font-bold text-black font-serif flex items-center">
