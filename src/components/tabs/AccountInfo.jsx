@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import UserContext from "../UserContext";
+import LoadinSpinner from "../LoadinSpinner";
 
 import {
   Card,
@@ -51,9 +52,10 @@ function AccountInfo() {
 
   if (!userData.userInfo) {
     return (
-      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
+      <Card className="border-transparent bg-transparent     ">
         <CardContent>
-          <p>Cargando información...</p>
+          {/* <p>Cargando información...</p> */}
+          <LoadinSpinner />
         </CardContent>
       </Card>
     );
