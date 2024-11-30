@@ -33,16 +33,7 @@ const UsersTab = () => {
           Administra los usuarios del sistema de la biblioteca.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* <div className="flex gap-2 mb-4">
-          <Input placeholder="Buscar por nombre o email" />
-          <Button>
-            <SearchIcon className="h-4 w-4 mr-2" />
-            Buscar
-          </Button>
-        </div> */}
-        {renderTable(usersTable, "users")}
-      </CardContent>
+      <CardContent>{renderTable(usersTable, "users")}</CardContent>
     </Card>
   );
 };

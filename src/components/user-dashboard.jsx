@@ -21,6 +21,7 @@ import {
 } from "firebase/firestore";
 
 // Components & Context
+import ChatButton from "./ChatButton";
 import UserContext from "./UserContext";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import React, { memo, useCallback, useEffect, useState } from "react";
@@ -517,6 +518,7 @@ const UserDashboard = () => {
             <Outlet />
           </div>
         </Tabs>
+        <ChatButton />
       </div>
     </UserContext.Provider>
   );

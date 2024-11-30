@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import LoadinSpinner from "../LoadinSpinner";
+import { Badge } from "../ui/badge";
 
 const ReservationsTab = () => {
   const { data, handleApproveReservation, handleRejectReservation } =
@@ -87,7 +88,9 @@ const ReservationsTab = () => {
                   <TableCell>
                     {reservation.requestedAt?.toDate().toLocaleString()}
                   </TableCell>
-                  <TableCell>{reservation.status}</TableCell>
+                  <TableCell>
+                    <Badge>{reservation.status}</Badge>
+                  </TableCell>
                   <TableCell>
                     {reservation.status === "pendiente" && (
                       <div className="flex space-x-2">

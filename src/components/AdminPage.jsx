@@ -1,7 +1,7 @@
 // Importaciones de React
 import { useState, useEffect, useCallback, memo } from "react";
 import { useLocation, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Trash2 as Trash2Icon } from "lucide-react";
+import { Trash2 as Trash2Icon, MessageSquare } from "lucide-react";
 // Importaciones externas
 import { FaPowerOff } from "react-icons/fa";
 import { toast } from "sonner";
@@ -85,6 +85,7 @@ const AdminPage = () => {
     reservations: [],
     books: [],
     pendingReservations: [],
+    supportTickets: [],
   });
   const [ui, setUi] = useState({
     editingBook: null,
@@ -315,7 +316,14 @@ const AdminPage = () => {
       }
     );
 
-    // ...existing code...
+    const ticketsRef = collection(db, "support_tickets");
+    const unsubscribeTickets = onSnapshot(ticketsRef, (snapshot) => {
+      const tickets = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setData((prev) => ({ ...prev, supportTickets: tickets }));
+    });
 
     return () => {
       unsubscribeAuth();
@@ -323,6 +331,7 @@ const AdminPage = () => {
       unsubscribeBooks();
       unsubscribeReservations();
       unsubscribePendingReservations();
+      unsubscribeTickets();
       // ...existing code...
     };
   }, []);
@@ -741,16 +750,18 @@ const AdminPage = () => {
 
   const renderTable = (table, tableType) => (
     <>
-      <div className="flex items-center space-x-2 mb-4">
-        <Input
-          placeholder={`Buscar ${
-            tableType === "users" ? "usuario" : "libro"
-          }...`}
-          className="max-w-sm"
-          value={table.getState().globalFilter ?? ""}
-          onChange={(e) => handleSearch(e.target.value, tableType)}
-        />
-      </div>
+      {tableType !== "tickets" && (
+        <div className="flex items-center space-x-2 mb-4">
+          <Input
+            placeholder={`Buscar ${
+              tableType === "users" ? "usuario" : "libro"
+            }...`}
+            className="max-w-sm"
+            value={table.getState().globalFilter ?? ""}
+            onChange={(e) => handleSearch(e.target.value, tableType)}
+          />
+        </div>
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -866,6 +877,15 @@ const AdminPage = () => {
             >
               <BarChart className="mr-2 h-4 w-4" /> {/* Usando BarChart */}
               Informes
+            </NavLink>
+          </TabsTrigger>
+          <TabsTrigger value="support" asChild>
+            <NavLink
+              to="support"
+              className="flex hover:border-2 hover:border-black items-center bg-opacity-90"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Soporte
             </NavLink>
           </TabsTrigger>
         </TabsList>

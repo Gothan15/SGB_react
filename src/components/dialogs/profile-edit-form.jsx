@@ -13,7 +13,7 @@ import { uploadImage } from "../../utils/cloudinaryConfig";
 
 export default function ProfileEditForm({ user, onSuccess, onClose }) {
   const [formData, setFormData] = useState({
-    name: user?.displayName || "",
+    name: user?.name || user?.displayName || "",
     phone: user?.phone || "",
     avatarUrl: user?.photoURL || "",
   });
@@ -64,11 +64,10 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
         photoURL: formData.avatarUrl,
       });
 
-      // Actualizar Firestore
+      // Actualizar Firestore - ahora solo usamos 'name'
       const userDoc = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userDoc, {
-        name: formData.name, // Guardamos el nombre consistentemente
-        displayName: formData.name, // Mantenemos ambos campos sincronizados
+        name: formData.name,
         phone: cleanPhone,
         photoURL: formData.avatarUrl,
         updatedAt: new Date(),
@@ -169,6 +168,7 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
 }
 ProfileEditForm.propTypes = {
   user: PropTypes.shape({
+    name: PropTypes.string,
     displayName: PropTypes.string,
     phone: PropTypes.string,
     photoURL: PropTypes.string,

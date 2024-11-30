@@ -12,6 +12,7 @@ import ReservationsTab from "./components/tabs/ReservationsTab";
 import UsersTab from "./components/tabs/UsersTab";
 import BooksTab from "./components/tabs/BooksTab";
 import ReportsTab from "./components/tabs/ReportsTab";
+import SupportTab from "./components/tabs/SupportTab";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -77,6 +78,8 @@ function App() {
             <Route path="users" element={<UsersTab />} />
             <Route path="books" element={<BooksTab />} />
             <Route path="reports" element={<ReportsTab />} />
+            <Route path="support" element={<SupportTab />} />
+            {/* tickets={data.supportTickets} */}
           </Route>
           <Route
             path="/student"
