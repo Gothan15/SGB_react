@@ -639,45 +639,12 @@ const Register = () => {
             ) : (
               <div className="w-full max-w-md space-y-8 px-4">
                 <div className="space-y-2 text-center">
-                  <h1 className="text-3xl font-bold">Biblioteca.UCI</h1>
-                </div>
-
-                {/* Botones de autenticación social */}
-                <div className="space-y-4">
-                  <Button
-                    onClick={handleGoogleSignIn}
-                    type="button"
-                    variant="outline"
-                    className="w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300"
-                  >
-                    <img
-                      src="https://www.google.com/favicon.ico"
-                      className="mr-2 h-4 w-4"
-                      alt="Google"
-                    />
-                    Continuar con Google
-                  </Button>
-
-                  <Button
-                    onClick={handleGithubSignIn}
-                    type="button"
-                    variant="outline"
-                    className="w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300"
-                  >
-                    <Github className="mr-2 h-4 w-4" />
-                    Continuar con GitHub
-                  </Button>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-zinc-800"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-black rounded-md px-2 text-zinc-400">
-                        o usar correo electrónico
-                      </span>
-                    </div>
-                  </div>
+                  <h1 className="text-3xl font-bold">
+                    Sistema de Gestión Bibliotecaria
+                  </h1>
+                  <p className="text-sm text-gray-400">
+                    Universidad de las Ciencias Informáticas
+                  </p>
                 </div>
 
                 <form
@@ -860,6 +827,43 @@ const Register = () => {
                     </Button>
                   )}
 
+                  {/* Botones de autenticación social */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-zinc-800"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-black rounded-md px-2 text-zinc-400">
+                        o usar otro método
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <Button
+                      onClick={handleGoogleSignIn}
+                      type="button"
+                      variant="outline"
+                      className="w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300"
+                    >
+                      <img
+                        src="https://www.google.com/favicon.ico"
+                        className="mr-2 h-4 w-4"
+                        alt="Google"
+                      />
+                      Continuar con Google
+                    </Button>
+
+                    <Button
+                      onClick={handleGithubSignIn}
+                      type="button"
+                      variant="outline"
+                      className="w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300"
+                    >
+                      <Github className="mr-2 h-4 w-4" />
+                      Continuar con GitHub
+                    </Button>
+                  </div>
+
                   <div className="  mx-5">
                     <div className=" text-center rounded-md  border-0 border-b-2 border-white px-4     text-zinc-400 mx-5">
                       {uiState.newUser ? (
@@ -902,6 +906,7 @@ const Register = () => {
                     </div>
                   </div>
                 </form>
+
                 {uiState.error && (
                   <p className="bg-red-800 text-white text-center p-1 uppercase font-bold mt-3 mb-1 rounded-md">
                     {uiState.error}
