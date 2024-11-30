@@ -20,6 +20,7 @@ import EditBookForm from "../dialogs/edit-book-form";
 import DeleteBookConfirmation from "../dialogs/delete-book-confirmation";
 import { useOutletContext } from "react-router-dom";
 import { toast } from "sonner";
+import LoadinSpinner from "../LoadinSpinner";
 
 const BooksTab = () => {
   const {
@@ -33,7 +34,13 @@ const BooksTab = () => {
   } = useOutletContext();
 
   if (!booksTable) {
-    return <div>Cargando libros...</div>;
+    return (
+      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+        <CardContent className="flex justify-center items-center min-h-[300px]">
+          <LoadinSpinner />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

@@ -44,6 +44,10 @@ import {
   BookPlus,
   Pencil,
   Trash2,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
+  BarChart, // Cambiamos ChartIcon por BarChart
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -78,16 +82,18 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   flexRender,
 } from "@tanstack/react-table";
 import { Toaster, toast } from "sonner";
 import ReservationsTab from "./tabs/ReservationsTab";
 import UsersTab from "./tabs/UsersTab";
 import BooksTab from "./tabs/BooksTab";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 const AdminPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   // Estados principales
   // Remover los estados message y error ya que usaremos toast
   // const [message, setMessage] = useState("");
@@ -105,6 +111,7 @@ const AdminPage = () => {
     addingBook: false,
     showUsers: true,
   });
+  const [loading, setLoading] = useState(true);
 
   // Corregir función setAddingBook que falta
   const setAddingBook = (value) => {
@@ -114,6 +121,7 @@ const AdminPage = () => {
   // Efectos para cargar datos iniciales
   useEffect(() => {
     const fetchInitialData = async () => {
+      setLoading(true);
       try {
         // Cargar usuarios
         const usersSnapshot = await getDocs(collection(db, "users"));
@@ -146,6 +154,8 @@ const AdminPage = () => {
         }));
       } catch (error) {
         console.error("Error cargando datos iniciales:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -357,11 +367,15 @@ const AdminPage = () => {
     }
   };
 
-  const handleLogout = () => {
-    signOut(auth).then(() => {
-      window.location.href = "/register";
-    });
-  };
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut(auth);
+      navigate("/register", { replace: true });
+    } catch (error) {
+      toast.error("Error al cerrar sesión");
+      console.error("Error al cerrar sesión:", error);
+    }
+  }, [navigate]);
 
   const handleDeleteUser = async (userId) => {
     const confirmPrompt = prompt(
@@ -527,10 +541,12 @@ const AdminPage = () => {
     {
       accessorKey: "id",
       header: "ID",
+      enableSorting: false,
     },
     {
       accessorKey: "name",
       header: "Nombre",
+      enableSorting: true,
     },
     {
       accessorKey: "email",
@@ -580,18 +596,22 @@ const AdminPage = () => {
     {
       accessorKey: "id",
       header: "ID",
+      enableSorting: false,
     },
     {
       accessorKey: "title",
       header: "Título",
+      enableSorting: true,
     },
     {
       accessorKey: "author",
       header: "Autor",
+      enableSorting: true,
     },
     {
       accessorKey: "publicationDate",
       header: "Fecha de Publicación",
+      enableSorting: true,
     },
     {
       accessorKey: "quantity",
@@ -705,6 +725,7 @@ const AdminPage = () => {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     initialState: {
       globalFilter: "",
     },
@@ -716,12 +737,20 @@ const AdminPage = () => {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     initialState: {
       globalFilter: "",
     },
   });
 
   // Reemplazar el renderizado de las tablas existentes con el nuevo formato
+  function getSortIcon(column) {
+    const sorted = column.getIsSorted();
+    if (!sorted) return <ChevronsUpDown className="ml-2 h-4 w-4" />;
+    if (sorted === "asc") return <ChevronUp className="ml-2 h-4 w-4" />;
+    return <ChevronDown className="ml-2 h-4 w-4" />;
+  }
+
   const renderTable = (table, tableType) => (
     <>
       <div className="flex items-center space-x-2 mb-4">
@@ -741,9 +770,22 @@ const AdminPage = () => {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
+                    {header.column.getCanSort() ? (
+                      <div
+                        className="flex cursor-pointer items-center"
+                        onClick={() => header.column.toggleSorting()}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                        {getSortIcon(header.column)}
+                      </div>
+                    ) : (
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )
                     )}
                   </TableHead>
                 ))}
@@ -801,11 +843,11 @@ const AdminPage = () => {
       </div>
 
       <Tabs value={location.pathname.split("/").pop()} className="space-y-4">
-        <TabsList className="border-2 ">
+        <TabsList className="border-2">
           <TabsTrigger value="reservations" asChild>
             <NavLink
               to="reservations"
-              className="flex  hover:border-2 hover:border-black items-center bg-opacity-90"
+              className="flex hover:border-2 hover:border-black items-center bg-opacity-90"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               Reservas
@@ -815,7 +857,6 @@ const AdminPage = () => {
             <NavLink
               to="users"
               className="flex hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
-              // flex items-center bg-opacity-90 shadow-black shadow-lg hover:border-2 hover:border-black backdrop:blur-sm bg-white
             >
               <UsersIcon className="mr-2 h-4 w-4" />
               Usuarios
@@ -828,6 +869,15 @@ const AdminPage = () => {
             >
               <BookIcon className="mr-2 h-4 w-4" />
               Libros
+            </NavLink>
+          </TabsTrigger>
+          <TabsTrigger value="reports" asChild>
+            <NavLink
+              to="reports"
+              className="flex hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
+            >
+              <BarChart className="mr-2 h-4 w-4" /> {/* Usando BarChart */}
+              Informes
             </NavLink>
           </TabsTrigger>
         </TabsList>
@@ -849,6 +899,7 @@ const AdminPage = () => {
               renderTable,
               usersTable,
               booksTable,
+              loading,
             }}
           />
         </div>

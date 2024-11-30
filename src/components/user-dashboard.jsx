@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 "use client";
 import UserContext from "./UserContext";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import React, { useState, useEffect, useCallback, memo } from "react";
 import {
   flexRender,
@@ -77,9 +77,11 @@ import AvailableBooks from "./tabs/AvailableBooks";
 import BorrowedBooks from "./tabs/BorrowedBooks";
 import AccountInfo from "./tabs/AccountInfo";
 import { Toaster, toast } from "sonner";
+import LoadinSpinner from "./LoadinSpinner";
 
 function UserDashboard() {
   const location = useLocation();
+  const navigate = useNavigate();
   // Estados agrupados lógicamente
   const [userData, setUserData] = useState({
     borrowedBooks: [],
@@ -96,11 +98,13 @@ function UserDashboard() {
     showEditProfile: false,
   });
 
+  const [loading, setLoading] = useState(true);
+
   // Efecto para cargar datos iniciales
   useEffect(() => {
     const loadUserData = async () => {
       if (!auth.currentUser) return;
-
+      setLoading(true);
       try {
         // Obtener información del perfil del usuario
         const userProfileRef = doc(db, "users", auth.currentUser.uid);
@@ -170,6 +174,8 @@ function UserDashboard() {
           ...prev,
           error: "Error al cargar los datos del usuario",
         }));
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -281,28 +287,32 @@ function UserDashboard() {
       // Eliminar el libro de la lista de prestados del usuario
       batch.delete(borrowedBookRef);
 
-      // Actualizar el historial de reservas
+      // Buscar la entrada existente en el historial que corresponde al préstamo
       const historyRef = collection(
         db,
         "users",
         auth.currentUser.uid,
         "reservationHistory"
       );
+      const historyQuery = query(
+        historyRef,
+        where("bookId", "==", book.bookId || book.id),
+        where("borrowedAt", "==", book.borrowedAt),
+        where("status", "==", "Prestado")
+      );
+      const historySnapshot = await getDocs(historyQuery);
 
-      // Crear nueva entrada en el historial
-      const newHistoryRef = doc(historyRef);
-      batch.set(newHistoryRef, {
-        bookId: book.bookId || book.id,
-        title: book.title,
-        author: book.author,
-        status: "Devuelto",
-        returnedAt: timestamp,
-        borrowedAt: book.borrowedAt || timestamp,
-        dueDate: book.dueDate || timestamp,
-        lateReturn: book.dueDate
-          ? timestamp.toDate() > book.dueDate.toDate()
-          : false,
-      });
+      if (!historySnapshot.empty) {
+        // Actualizar la entrada existente en el historial
+        const historyDoc = historySnapshot.docs[0];
+        batch.update(historyDoc.ref, {
+          status: "Devuelto",
+          returnedAt: timestamp,
+          lateReturn: book.dueDate
+            ? timestamp.toDate() > book.dueDate.toDate()
+            : false,
+        });
+      }
 
       // Ejecutar todas las operaciones en batch
       await batch.commit();
@@ -351,12 +361,17 @@ function UserDashboard() {
     }
   }, []);
 
-  // Maneja el cierre de sesión
-  const handleLogout = useCallback(() => {
-    signOut(auth).then(() => {
-      window.location.href = "/register";
-    });
-  }, []);
+  // Maneja el cierre de sesión de manera más eficiente
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut(auth);
+      // Usar navigate de react-router-dom en lugar de window.location
+      navigate("/register", { replace: true });
+    } catch (error) {
+      toast.error("Error al cerrar sesión");
+      console.error("Error al cerrar sesión:", error);
+    }
+  }, [navigate]);
 
   // Función auxiliar para formatear el número de teléfono
   const formatPhoneNumber = useCallback((phone) => {
@@ -441,6 +456,7 @@ function UserDashboard() {
         uiState,
         setUiState,
         table,
+        loading,
       }}
     >
       <div className="md:w-[1920px] min-h-screen md:mx-auto p-6 bg-black bg-opacity-30 backdrop-blur-sm">

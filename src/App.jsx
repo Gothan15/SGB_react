@@ -11,6 +11,7 @@ import AccountInfo from "./components/tabs/AccountInfo";
 import ReservationsTab from "./components/tabs/ReservationsTab";
 import UsersTab from "./components/tabs/UsersTab";
 import BooksTab from "./components/tabs/BooksTab";
+import ReportsTab from "./components/tabs/ReportsTab";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
@@ -51,7 +52,7 @@ function App() {
   return (
     <div
       className="text-white min-h-[100vh] flex justify-center items-center bg-center bg-cover  "
-      style={{ backgroundImage: "url('/img/bg.jpeg')" }}
+      style={{ backgroundImage: "url('../src/img/bg.jpeg')" }}
     >
       <Toaster richColors closeButton position="bottom-right" />
       <Router>
@@ -71,6 +72,7 @@ function App() {
             <Route path="reservations" element={<ReservationsTab />} />
             <Route path="users" element={<UsersTab />} />
             <Route path="books" element={<BooksTab />} />
+            <Route path="reports" element={<ReportsTab />} />
           </Route>
           <Route
             path="/student"

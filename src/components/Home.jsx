@@ -18,7 +18,6 @@ import {
   ArrowRightCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ComponenteMio from "./componente";
 
 const Home = () => {
   const navigate = useNavigate();

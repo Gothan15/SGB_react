@@ -10,12 +10,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SearchIcon } from "lucide-react";
+import LoadinSpinner from "../LoadinSpinner";
 
 const UsersTab = () => {
   const { renderTable, usersTable } = useOutletContext();
 
   if (!usersTable) {
-    return <div>Cargando usuarios...</div>;
+    return (
+      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+        <CardContent className="flex justify-center items-center min-h-[300px]">
+          <LoadinSpinner />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
