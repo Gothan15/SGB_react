@@ -52,7 +52,7 @@ function AccountInfo() {
 
   if (!userData.userInfo) {
     return (
-      <Card className="border-transparent bg-transparent     ">
+      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen   ">
         <CardContent>
           {/* <p>Cargando información...</p> */}
           <LoadinSpinner />
@@ -79,7 +79,9 @@ function AccountInfo() {
             <div className="space-y-2">
               <p>
                 <strong>Nombre:</strong>{" "}
-                {userData.userInfo.displayName || "No especificado"}
+                {userData.userInfo.name ||
+                  userData.userInfo.displayName ||
+                  "No especificado"}
               </p>
               <p>
                 <strong>Email:</strong> {userData.userInfo.email}

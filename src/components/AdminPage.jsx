@@ -1,6 +1,10 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback, memo } from "react";
-import { Trash2Icon } from "lucide-react";
+// Importaciones de React
+import { useState, useEffect, useCallback, memo } from "react";
+import { useLocation, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Trash2 as Trash2Icon } from "lucide-react";
+// Importaciones externas
+import { FaPowerOff } from "react-icons/fa";
+import { toast } from "sonner";
 import {
   collection,
   doc,
@@ -10,73 +14,13 @@ import {
   where,
   addDoc,
   onSnapshot,
-  setDoc,
   getDoc,
   getDocs,
   increment,
   writeBatch,
+  Timestamp,
 } from "firebase/firestore";
-import { ref, listAll, getDownloadURL, deleteObject } from "firebase/storage";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { Timestamp } from "firebase/firestore";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { db, auth, storage } from "../firebaseConfig";
-import { MdDeleteForever } from "react-icons/md";
-import NewBookForm from "./dialogs/new-book-form";
-import EditBookForm from "./dialogs/edit-book-form";
-import DeleteBookConfirmation from "./dialogs/delete-book-confirmation";
-import { FaPowerOff } from "react-icons/fa";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import * as XLSX from "xlsx";
-import {
-  UsersIcon,
-  CalendarIcon,
-  BookIcon,
-  SearchIcon,
-  BookPlus,
-  Pencil,
-  Trash2,
-  ChevronsUpDown,
-  ChevronUp,
-  ChevronDown,
-  BarChart, // Cambiamos ChartIcon por BarChart
-} from "lucide-react";
-
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
 import {
   useReactTable,
   getCoreRowModel,
@@ -85,11 +29,48 @@ import {
   getSortedRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { Toaster, toast } from "sonner";
-import ReservationsTab from "./tabs/ReservationsTab";
-import UsersTab from "./tabs/UsersTab";
-import BooksTab from "./tabs/BooksTab";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  UsersIcon,
+  CalendarIcon,
+  BookIcon,
+  Pencil,
+  Trash2,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
+  BarChart,
+} from "lucide-react";
+
+// Importaciones internas
+import { db, auth } from "../firebaseConfig";
+import EditBookForm from "./dialogs/edit-book-form";
+import DeleteBookConfirmation from "./dialogs/delete-book-confirmation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const AdminPage = () => {
   const location = useLocation();
@@ -164,6 +145,7 @@ const AdminPage = () => {
 
   // Handlers optimizados usando useCallback
   const handleEditBook = useCallback(async (updatedBook) => {
+    console.log("Editando libro:", updatedBook); // Console log agregado
     try {
       const bookDocRef = doc(db, "books", updatedBook.id);
       await updateDoc(bookDocRef, updatedBook);
@@ -181,6 +163,7 @@ const AdminPage = () => {
 
   // Corregir handleStatusChange para manejar el caso de usuario
   const handleChangeRole = async (userId, newRole) => {
+    console.log(`Cambiando rol del usuario ${userId} a ${newRole}`); // Console log agregado
     if (confirm(`¿Estás seguro de cambiar el rol del usuario?`)) {
       try {
         const userDocRef = doc(db, "users", userId);
@@ -202,6 +185,7 @@ const AdminPage = () => {
   };
 
   const handleStatusChange = async (itemId, newValue, itemType) => {
+    console.log(`Cambiando estado de ${itemType} ${itemId} a ${newValue}`); // Console log agregado
     try {
       switch (itemType) {
         case "user":
@@ -326,7 +310,7 @@ const AdminPage = () => {
     );
     const unsubscribePendingReservations = onSnapshot(
       pendingReservationsQuery,
-      (snapshot) => {
+      () => {
         // ...existing code to handle pending reservations...
       }
     );
@@ -344,6 +328,7 @@ const AdminPage = () => {
   }, []);
 
   const handleDeleteBook = async (bookId) => {
+    console.log("Eliminando libro con ID:", bookId); // Console log agregado
     const bookDocRef = doc(db, "books", bookId);
     await deleteDoc(bookDocRef);
     setData((prev) => ({
@@ -354,6 +339,7 @@ const AdminPage = () => {
   };
 
   const handleAddBook = async (newBook) => {
+    console.log("Añadiendo nuevo libro:", newBook); // Console log agregado
     try {
       const booksCollection = collection(db, "books");
       const bookDocRef = await addDoc(booksCollection, newBook);
@@ -368,6 +354,7 @@ const AdminPage = () => {
   };
 
   const handleLogout = useCallback(async () => {
+    console.log("Usuario cerró sesión."); // Console log agregado
     try {
       await signOut(auth);
       navigate("/register", { replace: true });
@@ -378,6 +365,7 @@ const AdminPage = () => {
   }, [navigate]);
 
   const handleDeleteUser = async (userId) => {
+    console.log("Eliminando usuario con ID:", userId); // Console log agregado
     const confirmPrompt = prompt(
       'Para eliminar el usuario, inserte la palabra "eliminar"'
     );

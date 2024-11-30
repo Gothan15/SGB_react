@@ -1,4 +1,5 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -29,16 +30,23 @@ import ReservationRenewalForm from "../dialogs/reservation-renewal-form";
 import { Timestamp } from "firebase/firestore";
 import UserContext from "../UserContext";
 import LoadinSpinner from "../LoadinSpinner";
+import { auth } from "@/firebaseConfig";
 
 function BorrowedBooks() {
   const { userData, handleRenewal, handleReturn, loading } =
     useContext(UserContext);
-  // eslint-disable-next-line no-unused-vars
+  const location = useLocation();
   const [showRenewalDialog, setShowRenewalDialog] = React.useState(false);
+
+  // Efecto para recargar datos cuando cambie la ruta
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    // Los datos se recargarán automáticamente a través del UserContext
+  }, [location.pathname]);
 
   if (loading) {
     return (
-      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>

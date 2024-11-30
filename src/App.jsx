@@ -34,11 +34,14 @@ function App() {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           setUserRole(userDoc.data().role);
+          console.log("Rol del usuario autenticado:", userDoc.data().role); // Console log agregado
         } else {
           setUserRole(null);
+          console.log("No se encontró el documento del usuario autenticado."); // Console log agregado
         }
       } else {
         setUserRole(null);
+        console.log("No hay usuario autenticado actualmente."); // Console log agregado
       }
       setLoading(false); // Cambiamos loading a false una vez determinado el estado
     });
@@ -46,6 +49,7 @@ function App() {
   }, []);
 
   if (loading) {
+    console.log("Cargando pantalla de carga..."); // Console log agregado
     return <LoadingScreen />;
   }
 

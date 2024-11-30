@@ -1,18 +1,9 @@
 /* eslint-disable no-unused-vars */
 "use client";
-import UserContext from "./UserContext";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import React, { useState, useEffect, useCallback, memo } from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
+
+// Firebase imports
 import { db, auth } from "../firebaseConfig";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   query,
@@ -24,11 +15,25 @@ import {
   onSnapshot,
   increment,
   deleteDoc,
-  orderBy,
   writeBatch,
   getDoc,
+  Timestamp,
 } from "firebase/firestore";
-import { signOut } from "firebase/auth";
+
+// Components & Context
+import UserContext from "./UserContext";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import React, { memo, useCallback, useEffect, useState } from "react";
+// UI Components imports
+import { Button } from "@/components/ui/button";
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
 import {
   Card,
   CardContent,
@@ -67,9 +72,7 @@ import { Input } from "@/components/ui/input";
 import BookReservationForm from "./dialogs/book-reservation-form";
 import BookReturnForm from "./dialogs/book-return-form";
 import ReservationRenewalForm from "./dialogs/reservation-renewal-form";
-import { Timestamp } from "firebase/firestore";
 import ReservationHistory from "./tabs/ReservationHistory";
-import { onAuthStateChanged } from "firebase/auth";
 import ProfileEditForm from "./dialogs/profile-edit-form";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import PhoneInput from "react-phone-input-2";
@@ -79,10 +82,11 @@ import AccountInfo from "./tabs/AccountInfo";
 import { Toaster, toast } from "sonner";
 import LoadinSpinner from "./LoadinSpinner";
 
-function UserDashboard() {
+const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  // Estados agrupados lógicamente
+
+  // Estados agrupados por funcionalidad
   const [userData, setUserData] = useState({
     borrowedBooks: [],
     reservationHistory: [],
@@ -100,97 +104,92 @@ function UserDashboard() {
 
   const [loading, setLoading] = useState(true);
 
-  // Efecto para cargar datos iniciales
+  // Funciones principales
+  const loadUserData = async () => {
+    if (!auth.currentUser) return;
+    setLoading(true);
+    try {
+      // Obtener información del perfil del usuario
+      const userProfileRef = doc(db, "users", auth.currentUser.uid);
+      const userProfileSnap = await getDoc(userProfileRef);
+      const userProfile = userProfileSnap.data();
+
+      // Obtener libros prestados
+      const borrowedBooksRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "borrowedBooks"
+      );
+      const borrowedBooksSnap = await getDocs(borrowedBooksRef);
+      const borrowedBooks = borrowedBooksSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Obtener libros disponibles
+      const booksRef = collection(db, "books");
+      const booksQuery = query(booksRef, where("status", "==", "Disponible"));
+      const booksSnap = await getDocs(booksQuery);
+      const availableBooks = booksSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Obtener reservas pendientes
+      const reservationsRef = collection(db, "reservations");
+      const reservationsQuery = query(
+        reservationsRef,
+        where("userId", "==", auth.currentUser.uid),
+        where("status", "==", "pendiente")
+      );
+      const reservationsSnap = await getDocs(reservationsQuery);
+      const pendingReservations = reservationsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Obtener historial de reservas
+      const historyRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "reservationHistory"
+      );
+      const historySnap = await getDocs(historyRef);
+      const reservationHistory = historySnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setUserData({
+        borrowedBooks,
+        reservationHistory,
+        userInfo: auth.currentUser,
+        availableBooks,
+        pendingReservations,
+        userProfile,
+      });
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      toast.error("Error al cargar los datos del usuario");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Efecto para cargar datos iniciales y recargar al cambiar de ruta
   useEffect(() => {
-    const loadUserData = async () => {
-      if (!auth.currentUser) return;
-      setLoading(true);
-      try {
-        // Obtener información del perfil del usuario
-        const userProfileRef = doc(db, "users", auth.currentUser.uid);
-        const userProfileSnap = await getDoc(userProfileRef);
-        const userProfile = userProfileSnap.data();
-
-        // Obtener libros prestados
-        const borrowedBooksRef = collection(
-          db,
-          "users",
-          auth.currentUser.uid,
-          "borrowedBooks"
-        );
-        const borrowedBooksSnap = await getDocs(borrowedBooksRef);
-        const borrowedBooks = borrowedBooksSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Obtener libros disponibles
-        const booksRef = collection(db, "books");
-        const booksQuery = query(booksRef, where("status", "==", "Disponible"));
-        const booksSnap = await getDocs(booksQuery);
-        const availableBooks = booksSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Obtener reservas pendientes
-        const reservationsRef = collection(db, "reservations");
-        const reservationsQuery = query(
-          reservationsRef,
-          where("userId", "==", auth.currentUser.uid),
-          where("status", "==", "pendiente")
-        );
-        const reservationsSnap = await getDocs(reservationsQuery);
-        const pendingReservations = reservationsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Obtener historial de reservas
-        const historyRef = collection(
-          db,
-          "users",
-          auth.currentUser.uid,
-          "reservationHistory"
-        );
-        const historySnap = await getDocs(historyRef);
-        const reservationHistory = historySnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Actualizar el estado con todos los datos
-        setUserData({
-          borrowedBooks,
-          reservationHistory,
-          userInfo: auth.currentUser,
-          availableBooks,
-          pendingReservations,
-          userProfile,
-        });
-      } catch (error) {
-        console.error("Error loading user data:", error);
-        setUiState((prev) => ({
-          ...prev,
-          error: "Error al cargar los datos del usuario",
-        }));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Configurar listener para cambios en la autenticación
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         loadUserData();
       } else {
-        window.location.href = "/register";
+        navigate("/register", { replace: true });
       }
     });
 
-    // Limpiar el listener cuando el componente se desmonte
     return () => unsubscribe();
-  }, []); // Se ejecuta solo al montar el componente
+  }, [location.pathname, navigate]); // Agregamos location.pathname y navigate como dependencias
 
   // Maneja la limpieza del historial
   const handleClearHistory = useCallback(async () => {
@@ -216,7 +215,7 @@ function UserDashboard() {
     }
   }, []);
 
-  // Maneja la reserva de un libro
+  // Handlers optimizados
   const handleReservation = useCallback(
     async (book, onSuccess) => {
       if (!auth.currentUser) {
@@ -521,7 +520,7 @@ function UserDashboard() {
       </div>
     </UserContext.Provider>
   );
-}
+};
 
 // Exportar el componente memoizado para evitar renders innecesarios
 export default memo(UserDashboard);

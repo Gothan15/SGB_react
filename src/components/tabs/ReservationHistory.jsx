@@ -31,9 +31,11 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import LoadinSpinner from "../LoadinSpinner";
+import { useLocation } from "react-router-dom";
 
 export default function ReservationHistory() {
   const { userData, loading } = useContext(UserContext);
+  const location = useLocation();
   const [reservations, setReservations] = useState([]);
 
   useEffect(() => {
@@ -64,11 +66,11 @@ export default function ReservationHistory() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [location.pathname]);
 
   if (loading) {
     return (
-      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>

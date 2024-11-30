@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -35,6 +36,15 @@ import LoadinSpinner from "../LoadinSpinner";
 
 function AvailableBooks() {
   const { table, handleReservation, loading } = useContext(UserContext);
+  const location = useLocation();
+
+  // Efecto para recargar datos cuando cambie la ruta
+  useEffect(() => {
+    if (table) {
+      table.resetGlobalFilter();
+      table.resetSorting();
+    }
+  }, [location.pathname, table]);
 
   function getSortIcon(column) {
     const sorted = column.getIsSorted();
@@ -49,7 +59,7 @@ function AvailableBooks() {
 
   if (loading) {
     return (
-      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>

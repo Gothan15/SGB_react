@@ -41,11 +41,11 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
     }
   };
 
-  const handleUrlChange = (e) => {
-    const url = e.target.value;
-    setFormData({ ...formData, avatarUrl: url });
-    setPreviewUrl(url);
-  };
+  // const handleUrlChange = (e) => {
+  //   const url = e.target.value;
+  //   setFormData({ ...formData, avatarUrl: url });
+  //   setPreviewUrl(url);
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,15 +58,18 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
       // Limpiar el número de teléfono eliminando el código de región
       const cleanPhone = formData.phone.replace(/^\d{1,2}/, "");
 
+      // Actualizar auth profile
       await updateProfile(auth.currentUser, {
         displayName: formData.name,
         photoURL: formData.avatarUrl,
       });
 
+      // Actualizar Firestore
       const userDoc = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userDoc, {
-        name: formData.name,
-        phone: cleanPhone, // Guardamos el número sin código de región
+        name: formData.name, // Guardamos el nombre consistentemente
+        displayName: formData.name, // Mantenemos ambos campos sincronizados
+        phone: cleanPhone,
         photoURL: formData.avatarUrl,
         updatedAt: new Date(),
       });
@@ -145,12 +148,13 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
           onChange={(phone) => setFormData({ ...formData, phone })}
           inputProps={{
             name: "phone",
-            required: true,
+            country: "cu",
+            required: false,
           }}
           inputStyle={{ width: "100%" }}
           specialLabel={null}
           enableSearch={true}
-          disableSearchIcon={false}
+          disableSearchIcon={true}
           placeholder="Ingrese número telefónico"
         />
       </div>

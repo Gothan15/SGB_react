@@ -1,10 +1,9 @@
-
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage, deleteObject, getDownloadURL} from "firebase/storage";
+import { getStorage, deleteObject, getDownloadURL } from "firebase/storage";
 import { ref } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -19,17 +18,33 @@ const firebaseConfig = {
   storageBucket: "login-react-firebase-f9406.firebasestorage.app",
   messagingSenderId: "552259136561",
   appId: "1:552259136561:web:b9de3af959dec9f53c7910",
-  measurementId: "G-WF26RPK5Q3"
+  measurementId: "G-WF26RPK5Q3",
 };
+
+// Configuración de intentos fallidos y bloqueo progresivo
+export const MAX_LOGIN_ATTEMPTS = 3; // Número máximo de intentos permitidos
+export const BASE_LOCK_DURATION = 5 * 60 * 1000; // 5 minutos base
+export const MAX_LOCK_MULTIPLIER = 4; // Máximo multiplicador de bloqueo
+
+// Configuración de bloqueo por IP
+export const IP_MAX_ATTEMPTS = 2; // Cambiado de 10 a 2 intentos
+export const IP_BLOCK_DURATION = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app)
-
-
+const storage = getStorage(app);
 
 //export { auth, db };
-export {auth,db,storage,analytics, deleteObject, getDownloadURL, getStorage,ref};
+export {
+  auth,
+  db,
+  storage,
+  analytics,
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  ref,
+};
