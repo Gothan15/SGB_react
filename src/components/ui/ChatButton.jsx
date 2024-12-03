@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import SupportForm from "./dialogs/support-form";
+import SupportForm from "../dialogs/support-form";
 
 const ChatButton = () => {
   const [open, setOpen] = useState(false);

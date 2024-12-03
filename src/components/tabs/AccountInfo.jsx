@@ -79,7 +79,9 @@ function AccountInfo() {
             <div className="space-y-2">
               <p>
                 <strong>Nombre:</strong>{" "}
-                {userData.userInfo.name || "No especificado"}
+                {userData.userInfo.name ||
+                  userData.userInfo.displayName ||
+                  "No especificado"}
               </p>
               <p>
                 <strong>Email:</strong> {userData.userInfo.email}

@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Card,
@@ -29,6 +29,7 @@ import {
 
 import { BookIcon } from "lucide-react";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react"; // Añadir estos imports
+import { Badge } from "@/components/ui/badge";
 import BookReservationForm from "../dialogs/book-reservation-form";
 import { flexRender } from "@tanstack/react-table";
 import UserContext from "../UserContext";
@@ -37,6 +38,7 @@ import LoadinSpinner from "../LoadinSpinner";
 function AvailableBooks() {
   const { table, handleReservation, loading } = useContext(UserContext);
   const location = useLocation();
+  const [open, setOpen] = useState(false);
 
   // Efecto para recargar datos cuando cambie la ruta
   useEffect(() => {
@@ -56,6 +58,18 @@ function AvailableBooks() {
     }
     return <ChevronDown className="ml-2 h-4 w-4" />;
   }
+
+  const getStatusBadge = (status) => {
+    const statusStyles = {
+      Disponible: "bg-green-500 hover:bg-green-600",
+      Reservado: "bg-yellow-500 hover:bg-yellow-600",
+      Prestado: "bg-red-500 hover:bg-red-600",
+    };
+
+    return (
+      <Badge className={statusStyles[status] || "bg-gray-500"}>{status}</Badge>
+    );
+  };
 
   if (loading) {
     return (
@@ -131,33 +145,15 @@ function AvailableBooks() {
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {cell.column.id === "status"
+                          ? getStatusBadge(cell.getValue())
+                          : flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
                       </TableCell>
                     ))}
-                    {/* <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <BookIcon className="mr-2 h-4 w-4" />
-                            Reservar
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Reservar Libro</DialogTitle>
-                            <DialogDescription>
-                              Confirma la reserva del libro seleccionado.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <BookReservationForm
-                            onReserve={() => handleReservation(row.original)}
-                          />
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell> */}
+                    <TableCell></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -188,8 +184,3 @@ function AvailableBooks() {
 }
 
 export default AvailableBooks;
-
-// Si tenías propTypes, elimínalas
-// AvailableBooks.propTypes = {
-//   // ...prop definitions...
-// };

@@ -1,9 +1,16 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useMemo } from "react";
 import { toast } from "sonner";
 
 import UserContext from "../UserContext";
-import { Trash2Icon, CalendarIcon } from "lucide-react";
+import {
+  Trash2Icon,
+  CalendarIcon,
+  ArrowUpDown,
+  ChevronsUpDown,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import {
   collection,
   query,
@@ -32,11 +39,72 @@ import {
 } from "@/components/ui/table";
 import LoadinSpinner from "../LoadinSpinner";
 import { useLocation } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  getPaginationRowModel,
+} from "@tanstack/react-table";
 
 export default function ReservationHistory() {
   const { userData, loading } = useContext(UserContext);
   const location = useLocation();
   const [reservations, setReservations] = useState([]);
+  const [sorting, setSorting] = useState([]);
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorFn: (row) => row.book || row.title,
+        id: "book",
+        header: "Libro",
+        cell: (info) => info.getValue(),
+      },
+      {
+        accessorKey: "author",
+        header: "Autor",
+      },
+      {
+        accessorKey: "status",
+        header: "Estado",
+        cell: (info) => (
+          <Badge className={getStatusBadge(info.getValue())}>
+            {info.getValue()}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "borrowedAt",
+        header: "Fecha de Préstamo",
+        cell: (info) => info.getValue()?.toDate().toLocaleDateString() || "N/A",
+      },
+      {
+        accessorKey: "returnedAt",
+        header: "Fecha de Devolución",
+        cell: (info) => info.getValue()?.toDate().toLocaleDateString() || "N/A",
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: reservations,
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(), // Agregar este
+    initialState: {
+      pagination: {
+        pageSize: 8,
+      },
+    },
+  });
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -106,6 +174,28 @@ export default function ReservationHistory() {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const statusStyles = {
+      Devuelto: "bg-green-500 hover:bg-green-600",
+      Prestado: "bg-black hover:bg-gray-600",
+      Vencido: "bg-red-500 hover:bg-red-600",
+      default: "bg-gray-500 hover:bg-gray-600",
+    };
+
+    return statusStyles[status] || statusStyles.default;
+  };
+
+  function getSortIcon(column) {
+    const sorted = column.getIsSorted();
+    if (!sorted) {
+      return <ChevronsUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sorted === "asc") {
+      return <ChevronUp className="ml-2 h-4 w-4" />;
+    }
+    return <ChevronDown className="ml-2 h-4 w-4" />;
+  }
+
   return (
     <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
       <CardHeader>
@@ -134,34 +224,51 @@ export default function ReservationHistory() {
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Libro</TableHead>
-                <TableHead>Autor</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Fecha de Préstamo</TableHead>
-                <TableHead>Fecha de Devolución</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reservations.map((reservation) => (
-                <TableRow key={reservation.id}>
-                  <TableCell>{reservation.book || reservation.title}</TableCell>
-                  <TableCell>{reservation.author}</TableCell>
-                  <TableCell>{reservation.status}</TableCell>
-                  <TableCell>
-                    {reservation.borrowedAt?.toDate().toLocaleDateString() ||
-                      "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {reservation.returnedAt?.toDate().toLocaleDateString() ||
-                      "N/A"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <div
+                            className={
+                              header.column.getCanSort()
+                                ? "flex cursor-pointer items-center"
+                                : ""
+                            }
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                            {header.column.getCanSort() &&
+                              getSortIcon(header.column)}
+                          </div>
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

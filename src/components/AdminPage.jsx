@@ -8,17 +8,18 @@ import { toast } from "sonner";
 import {
   collection,
   doc,
-  deleteDoc,
+  // deleteDoc,
   updateDoc,
   query,
   where,
-  addDoc,
+  // addDoc,
   onSnapshot,
   getDoc,
   getDocs,
   increment,
   writeBatch,
   Timestamp,
+  orderBy,
 } from "firebase/firestore";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import {
@@ -71,6 +72,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import NotificationButton from "./ui/NotificationButton";
 
 const AdminPage = () => {
   const location = useLocation();
@@ -94,11 +96,12 @@ const AdminPage = () => {
     showUsers: true,
   });
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
 
   // Corregir función setAddingBook que falta
-  const setAddingBook = (value) => {
-    setUi((prev) => ({ ...prev, addingBook: value }));
-  };
+  // const setAddingBook = (value) => {
+  //   setUi((prev) => ({ ...prev, addingBook: value }));
+  // };
 
   // Efectos para cargar datos iniciales
   useEffect(() => {
@@ -146,32 +149,90 @@ const AdminPage = () => {
 
   // Handlers optimizados usando useCallback
   const handleEditBook = useCallback(async (updatedBook) => {
-    console.log("Editando libro:", updatedBook); // Console log agregado
     try {
-      const bookDocRef = doc(db, "books", updatedBook.id);
-      await updateDoc(bookDocRef, updatedBook);
+      const batch = writeBatch(db);
+      const bookRef = doc(db, "books", updatedBook.id);
+
+      // Actualizar libro
+      batch.update(bookRef, updatedBook);
+
+      // Crear notificación para administradores
+      const adminsSnapshot = await getDocs(
+        query(collection(db, "users"), where("role", "==", "admin"))
+      );
+      const timestamp = Timestamp.fromDate(new Date());
+
+      adminsSnapshot.docs.forEach((adminDoc) => {
+        const notificationRef = doc(
+          collection(db, "users", adminDoc.id, "notifications")
+        );
+        batch.set(notificationRef, {
+          message: `Libro actualizado: "${updatedBook.title}"`,
+          type: "book_updated",
+          createdAt: timestamp,
+          read: false,
+        });
+      });
+
+      await batch.commit();
       setData((prev) => ({
         ...prev,
         books: prev.books.map((book) =>
           book.id === updatedBook.id ? updatedBook : book
         ),
       }));
-      setUi((prev) => ({ ...prev, editingBook: null }));
     } catch (error) {
-      console.error("Error al editar libro:", error);
+      console.error("Error al actualizar libro:", error);
+      toast.error("Error al actualizar libro");
     }
   }, []);
 
   // Corregir handleStatusChange para manejar el caso de usuario
   const handleChangeRole = async (userId, newRole) => {
-    console.log(`Cambiando rol del usuario ${userId} a ${newRole}`); // Console log agregado
     if (confirm(`¿Estás seguro de cambiar el rol del usuario?`)) {
       try {
-        const userDocRef = doc(db, "users", userId);
-        await updateDoc(userDocRef, {
-          role: newRole,
+        const batch = writeBatch(db);
+        const userRef = doc(db, "users", userId);
+        const userDoc = await getDoc(userRef);
+        const userData = userDoc.data();
+
+        // Actualizar rol
+        batch.update(userRef, { role: newRole });
+
+        // Crear notificaciones
+        const timestamp = Timestamp.fromDate(new Date());
+
+        // Notificación para el usuario afectado
+        const userNotificationRef = doc(
+          collection(db, "users", userId, "notifications")
+        );
+        batch.set(userNotificationRef, {
+          message: `Tu rol ha sido actualizado a: ${newRole}`,
+          type: "role_updated",
+          createdAt: timestamp,
+          read: false,
         });
 
+        // Notificación para administradores
+        const adminsSnapshot = await getDocs(
+          query(collection(db, "users"), where("role", "==", "admin"))
+        );
+        adminsSnapshot.docs.forEach((adminDoc) => {
+          if (adminDoc.id !== userId) {
+            // Evitar duplicar notificación si el usuario es admin
+            const notificationRef = doc(
+              collection(db, "users", adminDoc.id, "notifications")
+            );
+            batch.set(notificationRef, {
+              message: `Rol actualizado para ${userData.name}: ${newRole}`,
+              type: "role_updated",
+              createdAt: timestamp,
+              read: false,
+            });
+          }
+        });
+
+        await batch.commit();
         setData((prev) => ({
           ...prev,
           users: prev.users.map((user) =>
@@ -179,8 +240,8 @@ const AdminPage = () => {
           ),
         }));
       } catch (error) {
-        console.error("Error al cambiar el rol del usuario:", error);
-        alert("Hubo un error al cambiar el rol del usuario.");
+        console.error("Error al cambiar el rol:", error);
+        toast.error("Error al cambiar el rol");
       }
     }
   };
@@ -336,29 +397,130 @@ const AdminPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let unsubscribe;
+    if (auth.currentUser) {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      const notificationsQuery = query(
+        notificationsRef,
+        orderBy("createdAt", "desc")
+      );
+      unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+        const notifs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setNotifications(notifs);
+      });
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  const clearNotifications = useCallback(async () => {
+    if (!auth.currentUser) return;
+    try {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      const snapshot = await getDocs(notificationsRef);
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      setNotifications([]);
+    } catch (error) {
+      console.error("Error al limpiar notificaciones:", error);
+    }
+  }, []);
+
   const handleDeleteBook = async (bookId) => {
-    console.log("Eliminando libro con ID:", bookId); // Console log agregado
-    const bookDocRef = doc(db, "books", bookId);
-    await deleteDoc(bookDocRef);
-    setData((prev) => ({
-      ...prev,
-      books: prev.books.filter((book) => book.id !== bookId),
-    }));
-    setUi((prev) => ({ ...prev, deletingBook: null }));
+    try {
+      const batch = writeBatch(db);
+      const bookRef = doc(db, "books", bookId);
+      const bookDoc = await getDoc(bookRef);
+      const bookData = bookDoc.data();
+
+      // Eliminar libro
+      batch.delete(bookRef);
+
+      // Crear notificación para administradores
+      const adminsSnapshot = await getDocs(
+        query(collection(db, "users"), where("role", "==", "admin"))
+      );
+      const timestamp = Timestamp.fromDate(new Date());
+
+      adminsSnapshot.docs.forEach((adminDoc) => {
+        const notificationRef = doc(
+          collection(db, "users", adminDoc.id, "notifications")
+        );
+        batch.set(notificationRef, {
+          message: `Libro eliminado: "${bookData.title}"`,
+          type: "book_deleted",
+          createdAt: timestamp,
+          read: false,
+        });
+      });
+
+      await batch.commit();
+      setData((prev) => ({
+        ...prev,
+        books: prev.books.filter((book) => book.id !== bookId),
+      }));
+    } catch (error) {
+      console.error("Error al eliminar libro:", error);
+      toast.error("Error al eliminar libro");
+    }
   };
 
   const handleAddBook = async (newBook) => {
-    console.log("Añadiendo nuevo libro:", newBook); // Console log agregado
     try {
+      const batch = writeBatch(db);
       const booksCollection = collection(db, "books");
-      const bookDocRef = await addDoc(booksCollection, newBook);
+      const newBookRef = doc(booksCollection);
+
+      // Añadir libro
+      batch.set(newBookRef, newBook);
+
+      // Crear notificación para administradores
+      const adminsSnapshot = await getDocs(
+        query(collection(db, "users"), where("role", "==", "admin"))
+      );
+      const timestamp = Timestamp.fromDate(new Date());
+
+      adminsSnapshot.docs.forEach((adminDoc) => {
+        const notificationRef = doc(
+          collection(db, "users", adminDoc.id, "notifications")
+        );
+        batch.set(notificationRef, {
+          message: `Nuevo libro añadido: "${newBook.title}" por ${newBook.author}`,
+          type: "book_added",
+          createdAt: timestamp,
+          read: false,
+        });
+      });
+
+      await batch.commit();
       setData((prev) => ({
         ...prev,
-        books: [...prev.books, { id: bookDocRef.id, ...newBook }],
+        books: [...prev.books, { id: newBookRef.id, ...newBook }],
       }));
-      setAddingBook(false); // Usamos la función corregida setAddingBook
     } catch (error) {
       console.error("Error al agregar libro:", error);
+      toast.error("Error al agregar libro");
     }
   };
 
@@ -374,25 +536,46 @@ const AdminPage = () => {
   }, [navigate]);
 
   const handleDeleteUser = async (userId) => {
-    console.log("Eliminando usuario con ID:", userId); // Console log agregado
     const confirmPrompt = prompt(
       'Para eliminar el usuario, inserte la palabra "eliminar"'
     );
     if (confirmPrompt && confirmPrompt.toLowerCase() === "eliminar") {
       try {
+        const batch = writeBatch(db);
         const userDocRef = doc(db, "users", userId);
-        await deleteDoc(userDocRef);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.data();
 
+        // Eliminar usuario
+        batch.delete(userDocRef);
+
+        // Crear notificación para administradores
+        const adminsSnapshot = await getDocs(
+          query(collection(db, "users"), where("role", "==", "admin"))
+        );
+        const timestamp = Timestamp.fromDate(new Date());
+
+        adminsSnapshot.docs.forEach((adminDoc) => {
+          const notificationRef = doc(
+            collection(db, "users", adminDoc.id, "notifications")
+          );
+          batch.set(notificationRef, {
+            message: `Usuario ${userData.name} (${userData.email}) ha sido eliminado del sistema.`,
+            type: "user_deleted",
+            createdAt: timestamp,
+            read: false,
+          });
+        });
+
+        await batch.commit();
         setData((prev) => ({
           ...prev,
           users: prev.users.filter((user) => user.id !== userId),
         }));
       } catch (error) {
         console.error("Error al eliminar el usuario:", error);
-        alert("Hubo un error al eliminar el usuario.");
+        toast.error("Error al eliminar el usuario");
       }
-    } else {
-      alert("La palabra ingresada no coincide, no se ha eliminado el usuario.");
     }
   };
 
@@ -401,19 +584,23 @@ const AdminPage = () => {
       const batch = writeBatch(db);
       const reservationRef = doc(db, "reservations", reservationId);
       const bookRef = doc(db, "books", bookId);
+      const reservationDoc = await getDoc(reservationRef);
       const bookDoc = await getDoc(bookRef);
       const timestamp = Timestamp.fromDate(new Date());
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 14); // 14 días de préstamo
 
       if (!bookDoc.exists()) {
-        throw new Error("El libro no existe");
+        throw new Error("El libro no existe en la base de datos");
       }
 
       const bookData = bookDoc.data();
+      const reservationData = reservationDoc.data();
+
       if (bookData.quantity <= 0) {
-        throw new Error("No hay ejemplares disponibles");
+        throw new Error("No hay suficientes copias disponibles");
       }
+
+      // Usar la fecha de devolución de la reserva
+      const dueDate = reservationData.dueDate;
 
       // Actualizar reserva
       batch.update(reservationRef, {
@@ -437,14 +624,13 @@ const AdminPage = () => {
         title: bookData.title,
         author: bookData.author,
         borrowedAt: timestamp,
-        dueDate: Timestamp.fromDate(dueDate),
+        dueDate: dueDate, // Usar la fecha de la reserva
         status: "Prestado",
         reservationId,
         category: bookData.category || "No especificada",
         isbn: bookData.isbn || "No disponible",
         notes: "",
       });
-
       // Agregar al historial con el mismo formato que user-dashboard
       const historyRef = doc(
         collection(db, "users", userId, "reservationHistory")
@@ -462,15 +648,39 @@ const AdminPage = () => {
         userId: userId,
         actionType: "Préstamo",
         notes: "",
-        dueDate: Timestamp.fromDate(dueDate),
+        dueDate: dueDate, // Usar la fecha de la reserva
         lateReturn: false,
+      });
+      // Añadir notificación para el usuario
+      const notificationRef = doc(
+        collection(db, "users", userId, "notifications")
+      );
+      batch.set(notificationRef, {
+        message: `Tu reserva para "${bookData.title}" ha sido aprobada.`,
+        createdAt: timestamp,
+        read: false,
+        type: "reservation_approved",
+      });
+
+      // Notificación para todos los administradores
+      const adminsSnapshot = await getDocs(
+        query(collection(db, "users"), where("role", "==", "admin"))
+      );
+
+      adminsSnapshot.docs.forEach((adminDoc) => {
+        const adminNotificationRef = doc(
+          collection(db, "users", adminDoc.id, "notifications")
+        );
+        batch.set(adminNotificationRef, {
+          message: `Reserva aprobada: "${bookData.title}" para el usuario ${userId}`,
+          createdAt: timestamp,
+          read: false,
+          type: "admin_reservation_approved",
+        });
       });
 
       await batch.commit();
-      toast.success("Reserva aprobada exitosamente", {
-        duration: 3000,
-        description: "La reserva ha sido procesada y aprobada",
-      });
+      toast.success("Reserva aprobada exitosamente");
     } catch (error) {
       toast.error("Error al aprobar la reserva", {
         duration: 3000,
@@ -520,11 +730,36 @@ const AdminPage = () => {
         lateReturn: false,
       });
 
-      await batch.commit();
-      toast.success("Reserva rechazada exitosamente", {
-        duration: 3000,
-        description: "La reserva ha sido rechazada",
+      // Notificación para el usuario
+      const userNotificationRef = doc(
+        collection(db, "users", userId, "notifications")
+      );
+      batch.set(userNotificationRef, {
+        message: `Tu reserva para "${bookData.title}" ha sido rechazada.`,
+        createdAt: timestamp,
+        read: false,
+        type: "reservation_rejected",
       });
+
+      // Notificación para todos los administradores
+      const adminsSnapshot = await getDocs(
+        query(collection(db, "users"), where("role", "==", "admin"))
+      );
+
+      adminsSnapshot.docs.forEach((adminDoc) => {
+        const adminNotificationRef = doc(
+          collection(db, "users", adminDoc.id, "notifications")
+        );
+        batch.set(adminNotificationRef, {
+          message: `Reserva rechazada: "${bookData.title}" para el usuario ${userId}`,
+          createdAt: timestamp,
+          read: false,
+          type: "admin_reservation_rejected",
+        });
+      });
+
+      await batch.commit();
+      toast.success("Reserva rechazada exitosamente");
     } catch (error) {
       toast.error("Error al rechazar la reserva", {
         duration: 3000,
@@ -725,6 +960,9 @@ const AdminPage = () => {
     getSortedRowModel: getSortedRowModel(),
     initialState: {
       globalFilter: "",
+      pagination: {
+        pageSize: 8,
+      },
     },
   });
 
@@ -737,6 +975,9 @@ const AdminPage = () => {
     getSortedRowModel: getSortedRowModel(),
     initialState: {
       globalFilter: "",
+      pagination: {
+        pageSize: 8,
+      },
     },
   });
 
@@ -831,6 +1072,12 @@ const AdminPage = () => {
         <h1 className="text-3xl text-black font-bold border-0 shadow-md shadow-black rounded-lg text-center py-1 px-2 bg-white bg-opacity-100">
           Panel de Administración de la Biblioteca
         </h1>
+        <div className="absolute right-[180px] top-[83px] rounded-md shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70">
+          <NotificationButton
+            notifications={notifications}
+            onClear={clearNotifications}
+          />
+        </div>
         <Button
           className="border-0 pl-3 absolute right-6 top-[83px] shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70"
           variant="outline"

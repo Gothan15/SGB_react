@@ -24,17 +24,23 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { RefreshCw, BookOpenIcon, ArrowLeftRight } from "lucide-react";
+import { RefreshCw, BookOpenIcon, ArrowLeftRight, X } from "lucide-react";
 import BookReturnForm from "../dialogs/book-return-form";
 import ReservationRenewalForm from "../dialogs/reservation-renewal-form";
 import { Timestamp } from "firebase/firestore";
 import UserContext from "../UserContext";
 import LoadinSpinner from "../LoadinSpinner";
 import { auth } from "@/firebaseConfig";
+import { Badge } from "../ui/badge";
 
 function BorrowedBooks() {
-  const { userData, handleRenewal, handleReturn, loading } =
-    useContext(UserContext);
+  const {
+    userData,
+    handleRenewal,
+    handleReturn,
+    handleCancelReservation,
+    loading,
+  } = useContext(UserContext);
   const location = useLocation();
   const [showRenewalDialog, setShowRenewalDialog] = React.useState(false);
 
@@ -89,19 +95,57 @@ function BorrowedBooks() {
                       <TableHead>Título</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Fecha de Solicitud</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {userData.pendingReservations.map((reservation) => (
                       <TableRow key={reservation.id}>
                         <TableCell>{reservation.bookTitle}</TableCell>
-                        <TableCell>{reservation.status}</TableCell>
+                        <TableCell>
+                          <Badge>{reservation.status}</Badge>
+                        </TableCell>
                         <TableCell>
                           {reservation.requestedAt instanceof Timestamp
                             ? reservation.requestedAt
                                 .toDate()
                                 .toLocaleDateString()
                             : "Fecha no disponible"}
+                        </TableCell>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                <X className="mr-2 h-4 w-4" />
+                                Cancelar
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Cancelar Reserva</DialogTitle>
+                                <DialogDescription>
+                                  ¿Estás seguro de que deseas cancelar esta
+                                  reserva?
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="flex justify-end space-x-2">
+                                <DialogTrigger asChild>
+                                  <Button variant="outline">No</Button>
+                                </DialogTrigger>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() =>
+                                    handleCancelReservation(
+                                      reservation.id,
+                                      reservation.bookTitle
+                                    )
+                                  }
+                                >
+                                  Sí, cancelar
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -18,13 +18,16 @@ import {
   writeBatch,
   getDoc,
   Timestamp,
+  orderBy,
+  setDoc,
 } from "firebase/firestore";
 
 // Components & Context
-import ChatButton from "./ChatButton";
+import ChatButton from "./ui/ChatButton";
 import UserContext from "./UserContext";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import React, { memo, useCallback, useEffect, useState } from "react";
+import NotificationButton from "./ui/NotificationButton";
 // UI Components imports
 import { Button } from "@/components/ui/button";
 import {
@@ -104,6 +107,7 @@ const UserDashboard = () => {
   });
 
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
 
   // Funciones principales
   const loadUserData = async () => {
@@ -192,6 +196,33 @@ const UserDashboard = () => {
     return () => unsubscribe();
   }, [location.pathname, navigate]); // Agregamos location.pathname y navigate como dependencias
 
+  useEffect(() => {
+    let unsubscribe;
+    if (auth.currentUser) {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      const notificationsQuery = query(
+        notificationsRef,
+        orderBy("createdAt", "desc")
+      );
+      unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+        const notifs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setNotifications(notifs);
+      });
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
   // Maneja la limpieza del historial
   const handleClearHistory = useCallback(async () => {
     try {
@@ -218,7 +249,7 @@ const UserDashboard = () => {
 
   // Handlers optimizados
   const handleReservation = useCallback(
-    async (book, onSuccess) => {
+    async (book, onSuccess, selectedDate) => {
       if (!auth.currentUser) {
         toast.error("Usuario no autenticado");
         return;
@@ -233,15 +264,28 @@ const UserDashboard = () => {
           bookAuthor: book.author,
           status: "pendiente",
           requestedAt: Timestamp.fromDate(new Date()),
+          dueDate: Timestamp.fromDate(selectedDate), // Agregamos la fecha de entrega
           processed: false,
+        });
+
+        const notificationRef = doc(
+          collection(db, "users", auth.currentUser.uid, "notifications")
+        );
+        await setDoc(notificationRef, {
+          message: `Has solicitado el libro "${
+            book.title
+          }" para entregar el ${selectedDate.toLocaleDateString()}.`,
+          createdAt: Timestamp.fromDate(new Date()),
+          read: false,
         });
 
         toast.success("Solicitud de reserva enviada correctamente", {
           duration: 3000,
-          description: `Has reservado "${book.title}"`,
+          description: `Has solicitado "${
+            book.title
+          }" para entregar el ${selectedDate.toLocaleDateString()}`,
         });
 
-        // Llamar al callback de éxito para cerrar el diálogo
         if (onSuccess) onSuccess();
       } catch (error) {
         toast.error("Error al enviar la solicitud de reserva", {
@@ -323,7 +367,18 @@ const UserDashboard = () => {
         borrowedBooks: prev.borrowedBooks.filter((b) => b.id !== book.id),
       }));
 
+      // Añadir notificación para el usuario
+      const notificationRef = doc(
+        collection(db, "users", auth.currentUser.uid, "notifications")
+      );
+      await setDoc(notificationRef, {
+        message: `Has devuelto el libro "${book.title}".`,
+        createdAt: Timestamp.fromDate(new Date()),
+        read: false,
+      });
+
       toast.success("Libro devuelto exitosamente");
+      // setNotifications((prev) => [...prev, `Has devuelto "${book.title}"`]);
     } catch (error) {
       console.error("Error al devolver el libro:", error);
       toast.error(`Error al devolver el libro: ${error.message}`);
@@ -380,6 +435,65 @@ const UserDashboard = () => {
     return phone;
   }, []);
 
+  const clearNotifications = useCallback(async () => {
+    if (!auth.currentUser) return;
+    try {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      const snapshot = await getDocs(notificationsRef);
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      setNotifications([]);
+    } catch (error) {
+      console.error("Error al limpiar notificaciones:", error);
+    }
+  }, []);
+
+  const handleCancelReservation = useCallback(
+    async (reservationId, bookTitle) => {
+      if (!auth.currentUser) return;
+
+      try {
+        // Eliminar la reservación
+        const reservationRef = doc(db, "reservations", reservationId);
+        await deleteDoc(reservationRef);
+
+        // Agregar notificación
+        const notificationRef = doc(
+          collection(db, "users", auth.currentUser.uid, "notifications")
+        );
+        await setDoc(notificationRef, {
+          message: `Has cancelado la reserva del libro "${bookTitle}".`,
+          createdAt: Timestamp.fromDate(new Date()),
+          read: false,
+        });
+
+        // Actualizar el estado local
+        setUserData((prev) => ({
+          ...prev,
+          pendingReservations: prev.pendingReservations.filter(
+            (r) => r.id !== reservationId
+          ),
+        }));
+
+        toast.success("Reserva cancelada exitosamente");
+      } catch (error) {
+        console.error("Error al cancelar la reserva:", error);
+        toast.error("Error al cancelar la reserva");
+      }
+    },
+    []
+  );
+
   const columns = [
     {
       accessorKey: "id",
@@ -417,15 +531,15 @@ const UserDashboard = () => {
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Reservar Libro</DialogTitle>
-                <DialogDescription>
-                  Confirma la reserva del libro seleccionado.
-                </DialogDescription>
-              </DialogHeader>
+              <DialogTitle>Reservar Libro</DialogTitle>
               <BookReservationForm
-                onReserve={() =>
-                  handleReservation(row.original, () => setOpen(false))
+                book={row.original}
+                onReserve={(selectedDate) =>
+                  handleReservation(
+                    row.original,
+                    () => setOpen(false),
+                    selectedDate
+                  )
                 }
               />
             </DialogContent>
@@ -442,6 +556,11 @@ const UserDashboard = () => {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 8,
+      },
+    },
   });
 
   return (
@@ -452,7 +571,7 @@ const UserDashboard = () => {
         handleReturn,
         handleReservation,
         handleClearHistory,
-
+        handleCancelReservation, // Agregar el nuevo handler al contexto
         uiState,
         setUiState,
         table,
@@ -464,6 +583,12 @@ const UserDashboard = () => {
           <h1 className="text-3xl text-black font-bold border-0 shadow-md shadow-black rounded-lg text-center py-1 px-2 bg-white bg-opacity-100">
             Panel de Usuario
           </h1>
+          <div className="absolute right-[180px] top-[83px] rounded-md shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70">
+            <NotificationButton
+              notifications={notifications}
+              onClear={clearNotifications}
+            />
+          </div>
         </div>
         <Button
           className="border-0  absolute right-6 top-[83px] pl-3 shadow-md shadow-black font-semibold h hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70"
