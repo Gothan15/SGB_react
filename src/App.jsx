@@ -23,6 +23,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function App() {
   const [userRole, setUserRole] = useState(null);
@@ -59,6 +60,7 @@ function App() {
       className="text-white min-h-[100vh] flex justify-center items-center bg-center bg-cover  "
       style={{ backgroundImage: "url('/img/bg.jpeg')" }}
     >
+      <SpeedInsights />
       <Toaster richColors closeButton position="bottom-right" />
       <Router>
         <Routes>
