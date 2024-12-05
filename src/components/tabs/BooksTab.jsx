@@ -61,7 +61,7 @@ const BooksTab = () => {
 
           <Dialog>
             <DialogTrigger className="absolute right-[65px]" asChild>
-              <Button variant="outline" size="">
+              <Button size="sm">
                 <BookPlus className="h-4 w-4" />
                 Agregar Nuevo Libro
               </Button>

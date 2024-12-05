@@ -45,6 +45,16 @@ const SupportTab = () => {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const statusStyles = {
+      resuelto: "bg-green-500 hover:bg-green-600",
+      EnProceso: "bg-black hover:bg-gray-600",
+      pendiente: "bg-red-500 hover:bg-red-600",
+      default: "bg-gray-500 hover:bg-gray-600",
+    };
+    return statusStyles[status] || statusStyles.default;
+  };
+
   const handleSearch = (value) => {
     setGlobalFilter(value);
     table.setGlobalFilter(value);
@@ -77,15 +87,7 @@ const SupportTab = () => {
       accessorKey: "status",
       header: "Estado",
       cell: ({ row }) => (
-        <Badge
-          variant={
-            row.original.status === "resuelto"
-              ? "success"
-              : row.original.status === "pendiente"
-              ? "warning"
-              : "default"
-          }
-        >
+        <Badge className={getStatusBadge(row.original.status)}>
           {row.original.status}
         </Badge>
       ),

@@ -90,8 +90,8 @@ const UsersTab = () => {
         </CardDescription>
       </CardHeader>
       <Dialog>
-        <DialogTrigger className="absolute right-[65px]" asChild>
-          <Button variant="outline" size="">
+        <DialogTrigger className=" absolute right-[65px]" asChild>
+          <Button size="sm">
             <UserPlus className="h-4 w-4" />
             Agregar Nuevo Usuario
           </Button>

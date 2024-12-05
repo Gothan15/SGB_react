@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Card,
@@ -27,28 +27,227 @@ import {
 import { RefreshCw, BookOpenIcon, ArrowLeftRight, X } from "lucide-react";
 import BookReturnForm from "../dialogs/book-return-form";
 import ReservationRenewalForm from "../dialogs/reservation-renewal-form";
-import { Timestamp } from "firebase/firestore";
-import UserContext from "../UserContext";
+import {
+  collection,
+  doc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+  query,
+  where,
+  writeBatch,
+  increment,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db, auth } from "@/firebaseConfig";
+import { toast } from "sonner";
 import LoadinSpinner from "../LoadinSpinner";
-import { auth } from "@/firebaseConfig";
 import { Badge } from "../ui/badge";
 
 function BorrowedBooks() {
-  const {
-    userData,
-    handleRenewal,
-    handleReturn,
-    handleCancelReservation,
-    loading,
-  } = useContext(UserContext);
+  const [borrowedBooks, setBorrowedBooks] = useState([]);
+  const [pendingReservations, setPendingReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
+  // eslint-disable-next-line no-unused-vars
   const [showRenewalDialog, setShowRenewalDialog] = React.useState(false);
 
-  // Efecto para recargar datos cuando cambie la ruta
+  // Efecto para cargar los libros prestados y reservas pendientes
   useEffect(() => {
-    if (!auth.currentUser) return;
-    // Los datos se recargarán automáticamente a través del UserContext
+    const fetchUserData = async () => {
+      if (!auth.currentUser) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Obtener libros prestados
+        const borrowedBooksRef = collection(
+          db,
+          "users",
+          auth.currentUser.uid,
+          "borrowedBooks"
+        );
+        const borrowedBooksSnap = await getDocs(borrowedBooksRef);
+        const borrowedBooksData = borrowedBooksSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setBorrowedBooks(borrowedBooksData);
+
+        // Obtener reservas pendientes
+        const reservationsRef = collection(db, "reservations");
+        const reservationsQuery = query(
+          reservationsRef,
+          where("userId", "==", auth.currentUser.uid),
+          where("status", "==", "pendiente")
+        );
+        const reservationsSnap = await getDocs(reservationsQuery);
+        const pendingReservationsData = reservationsSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPendingReservations(pendingReservationsData);
+
+        setLoading(false);
+      } catch (error) {
+        console.error("Error al cargar datos del usuario:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
   }, [location.pathname]);
+
+  // Función auxiliar para guardar notificaciones
+  const saveNotification = async (title, message, type) => {
+    try {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      await addDoc(notificationsRef, {
+        title,
+        message,
+        type,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error al guardar la notificación:", error);
+    }
+  };
+
+  // Función para manejar la renovación
+  const handleRenewal = async (bookId, newDueDate) => {
+    try {
+      const borrowedBookRef = doc(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "borrowedBooks",
+        bookId
+      );
+      await updateDoc(borrowedBookRef, {
+        dueDate: newDueDate,
+      });
+
+      // Actualizar el estado local
+      setBorrowedBooks((prevBooks) =>
+        prevBooks.map((book) =>
+          book.id === bookId ? { ...book, dueDate: newDueDate } : book
+        )
+      );
+
+      const book = borrowedBooks.find((b) => b.id === bookId);
+      await saveNotification(
+        "Préstamo Renovado",
+        `El préstamo del libro "${book.title}" ha sido renovado exitosamente.`,
+        "success"
+      );
+
+      toast.success("Préstamo renovado exitosamente");
+    } catch (error) {
+      console.error("Error al renovar el préstamo:", error);
+      toast.error("Error al renovar el préstamo");
+    }
+  };
+
+  // Función para manejar la devolución
+  const handleReturn = async (book) => {
+    try {
+      const batch = writeBatch(db);
+
+      const borrowedBookRef = doc(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "borrowedBooks",
+        book.id
+      );
+
+      const bookRef = doc(db, "books", book.bookId || book.id);
+      const timestamp = Timestamp.fromDate(new Date());
+
+      // Actualizar el estado y la cantidad del libro
+      batch.update(bookRef, {
+        quantity: increment(1),
+        status: "Disponible",
+      });
+
+      // Eliminar el libro de la lista de prestados del usuario
+      batch.delete(borrowedBookRef);
+
+      // Buscar primero el registro en el historial
+      const historyRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "reservationHistory"
+      );
+      const historyQuery = query(
+        historyRef,
+        where("borrowedAt", "==", book.borrowedAt)
+      );
+      const historySnapshot = await getDocs(historyQuery);
+
+      // Si existe, actualizar el registro existente. Si no, crear uno nuevo
+      if (!historySnapshot.empty) {
+        const existingDoc = historySnapshot.docs[0];
+        batch.update(existingDoc.ref, {
+          status: "Devuelto",
+          returnedAt: timestamp,
+        });
+      } else {
+        // Si por alguna razón no existe el registro, crear uno nuevo
+        const newHistoryRef = doc(historyRef, book.id);
+        batch.set(newHistoryRef, {
+          ...book,
+          status: "Devuelto",
+          returnedAt: timestamp,
+        });
+      }
+
+      await batch.commit();
+
+      await saveNotification(
+        "Libro Devuelto",
+        `El libro "${book.title}" ha sido devuelto exitosamente.`,
+        "info"
+      );
+
+      toast.success("Libro devuelto exitosamente");
+
+      setBorrowedBooks((prevBooks) =>
+        prevBooks.filter((b) => b.id !== book.id)
+      );
+    } catch (error) {
+      console.error("Error al devolver el libro:", error);
+      toast.error("Error al devolver el libro");
+    }
+  };
+
+  // Función para manejar la cancelación de la reserva
+  const handleCancelReservation = async (reservationId, bookTitle) => {
+    try {
+      const reservationRef = doc(db, "reservations", reservationId);
+      await deleteDoc(reservationRef);
+
+      toast.success(`Reserva de "${bookTitle}" cancelada`);
+
+      // Actualizar el estado local
+      setPendingReservations((prevReservations) =>
+        prevReservations.filter((r) => r.id !== reservationId)
+      );
+    } catch (error) {
+      console.error("Error al cancelar la reserva:", error);
+      toast.error("Error al cancelar la reserva");
+    }
+  };
 
   if (loading) {
     return (
@@ -69,8 +268,7 @@ function BorrowedBooks() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {userData.pendingReservations.length === 0 &&
-        userData.borrowedBooks.length === 0 ? (
+        {pendingReservations.length === 0 && borrowedBooks.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="rounded-full bg-background/10 p-3">
               <BookOpenIcon className="h-10 w-10 text-muted-foreground" />
@@ -84,7 +282,7 @@ function BorrowedBooks() {
           </div>
         ) : (
           <>
-            {userData.pendingReservations.length > 0 && (
+            {pendingReservations.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold mb-4">
                   Solicitudes Pendientes
@@ -99,7 +297,7 @@ function BorrowedBooks() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userData.pendingReservations.map((reservation) => (
+                    {pendingReservations.map((reservation) => (
                       <TableRow key={reservation.id}>
                         <TableCell>{reservation.bookTitle}</TableCell>
                         <TableCell>
@@ -154,7 +352,7 @@ function BorrowedBooks() {
               </>
             )}
 
-            {userData.borrowedBooks.length > 0 && (
+            {borrowedBooks.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold my-4">
                   Libros Prestados Actualmente
@@ -170,7 +368,7 @@ function BorrowedBooks() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userData.borrowedBooks.map((book) => (
+                    {borrowedBooks.map((book) => (
                       <TableRow key={book.id}>
                         <TableCell>{book.id}</TableCell>
                         <TableCell>{book.title}</TableCell>
@@ -184,11 +382,7 @@ function BorrowedBooks() {
                           <div className="flex space-x-2">
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button
-                                  className=""
-                                  size="sm"
-                                  variant="outline"
-                                >
+                                <Button className="" size="sm">
                                   <RefreshCw className="mr-2 h-4 w-4" />
                                   Renovar
                                 </Button>
@@ -210,7 +404,7 @@ function BorrowedBooks() {
                             </Dialog>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button size="sm" variant="outline">
+                                <Button size="sm">
                                   <ArrowLeftRight className="mr-2 h-4 w-4" />
                                   Devolver
                                 </Button>

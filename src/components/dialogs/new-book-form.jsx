@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "../../firebaseConfig";
 import { collection, getDocs, addDoc } from "firebase/firestore";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +27,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { toast } from "sonner";
 
 const initialFormState = {
   title: "",
@@ -41,6 +43,7 @@ const ManageBooks = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState(initialFormState);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchBooks = useCallback(async () => {
     try {
@@ -72,6 +75,7 @@ const ManageBooks = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (
       !formData.title ||
@@ -97,6 +101,8 @@ const ManageBooks = () => {
     } catch (err) {
       console.error("Error al agregar libro:", err);
       setError("Error al agregar libro");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -200,8 +206,16 @@ const ManageBooks = () => {
               </Select>
             </div>
           </div>
-          <Button className="w-full mt-6" type="submit">
-            Agregar Libro
+
+          <Button className="w-full mt-6" type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Agregando libro...
+              </>
+            ) : (
+              "Agregar libro"
+            )}
           </Button>
         </form>
       </CardContent>

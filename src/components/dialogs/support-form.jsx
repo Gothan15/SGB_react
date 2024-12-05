@@ -20,6 +20,27 @@ const SupportForm = ({ onClose }) => {
     message: "",
   });
 
+  // Función auxiliar para guardar notificaciones
+  const saveNotification = async (title, message, type) => {
+    try {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      await addDoc(notificationsRef, {
+        title,
+        message,
+        type,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error al guardar la notificación:", error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -36,6 +57,13 @@ const SupportForm = ({ onClose }) => {
         status: "pendiente",
         createdAt: serverTimestamp(),
       });
+
+      // Guardar notificación del ticket de soporte
+      await saveNotification(
+        "Ticket de Soporte Enviado",
+        `Tu ticket "${formData.subject}" ha sido enviado y será atendido pronto.`,
+        "info"
+      );
 
       toast.success("Reporte enviado exitosamente");
       onClose();

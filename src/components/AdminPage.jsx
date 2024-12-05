@@ -891,7 +891,6 @@ const AdminPage = () => {
           <Dialog>
             <DialogTrigger asChild>
               <Button
-                variant="outline"
                 size="icon"
                 onClick={() =>
                   setUi((prev) => ({ ...prev, editingBook: row.original }))
@@ -922,7 +921,6 @@ const AdminPage = () => {
           <Dialog>
             <DialogTrigger asChild>
               <Button
-                variant="outline"
                 size="icon"
                 onClick={() =>
                   setUi((prev) => ({ ...prev, deletingBook: row.original }))

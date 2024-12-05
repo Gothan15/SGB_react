@@ -2,27 +2,17 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import PropTypes from "prop-types";
 import { Timestamp } from "firebase/firestore";
-import { toast } from "@/components/ui/sonner";
 
 export default function ReservationRenewalForm({ book, onRenew, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Calcular nueva fecha (5 días más)
     const currentDate = book.dueDate.toDate();
-    const newDate = new Date(currentDate.getTime());
+    const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + 5);
     const newTimestamp = Timestamp.fromDate(newDate);
 
-    // Llamar a onRenew con el id del libro y la nueva fecha
     onRenew(book.id, newTimestamp);
-
-    // Mostrar toast usando Sonner - Corregido el formato
-    toast.success("Préstamo renovado", {
-      description: "La reserva ha sido extendida por 5 días adicionales.",
-    });
-
-    // Cerrar el diálogo
     onClose();
   };
 

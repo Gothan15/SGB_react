@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { uploadImage } from "../../utils/cloudinaryConfig";
+import { Loader2 } from "lucide-react";
 
 export default function ProfileEditForm({ user, onSuccess, onClose }) {
   const [formData, setFormData] = useState({
@@ -19,13 +20,15 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
   });
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(user?.photoURL || "");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      onSuccess("Error: Por favor seleccione un archivo de imagen válido");
+      const errorMsg = "Por favor seleccione un archivo de imagen válido";
+      onSuccess("Error: " + errorMsg);
       return;
     }
 
@@ -35,20 +38,16 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
       setFormData({ ...formData, avatarUrl: imageUrl });
       setPreviewUrl(imageUrl);
     } catch (error) {
-      onSuccess("Error al subir la imagen: " + error.message);
+      const errorMsg = "Error al subir la imagen: " + error.message;
+      onSuccess(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  // const handleUrlChange = (e) => {
-  //   const url = e.target.value;
-  //   setFormData({ ...formData, avatarUrl: url });
-  //   setPreviewUrl(url);
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       // Validar URL
       if (formData.avatarUrl && !isValidUrl(formData.avatarUrl)) {
@@ -58,13 +57,7 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
       // Limpiar el número de teléfono eliminando el código de región
       const cleanPhone = formData.phone.replace(/^\d{1,2}/, "");
 
-      // Actualizar auth profile
-      await updateProfile(auth.currentUser, {
-        displayName: formData.name,
-        photoURL: formData.avatarUrl,
-      });
-
-      // Actualizar Firestore - ahora solo usamos 'name'
+      // Actualizar Firestore primero
       const userDoc = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userDoc, {
         name: formData.name,
@@ -73,11 +66,21 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
         updatedAt: new Date(),
       });
 
-      onSuccess("Perfil actualizado exitosamente");
+      // Luego actualizar auth profile
+      await updateProfile(auth.currentUser, {
+        displayName: formData.name,
+        photoURL: formData.avatarUrl,
+      });
+
+      const successMsg = "Perfil actualizado exitosamente";
+      onSuccess(successMsg);
       onClose();
     } catch (error) {
       console.error("Error actualizando perfil:", error);
-      onSuccess("Error: " + error.message);
+      const errorMsg = error.message;
+      onSuccess("Error: " + errorMsg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -161,7 +164,16 @@ export default function ProfileEditForm({ user, onSuccess, onClose }) {
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>
-        <Button type="submit">Guardar Cambios</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Guardando cambios...
+            </>
+          ) : (
+            "Guardar cambios"
+          )}
+        </Button>
       </div>
     </form>
   );

@@ -1,13 +1,11 @@
 /* eslint-disable no-unused-vars */
 // Importación de hooks y componentes necesarios
-import { useState, useEffect, useContext, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
-import UserContext from "../UserContext";
 import {
   Trash2Icon,
   CalendarIcon,
-  ArrowUpDown,
   ChevronsUpDown,
   ChevronDown,
   ChevronUp,
@@ -20,6 +18,8 @@ import {
   getDocs,
   deleteDoc,
   writeBatch,
+  addDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "@/firebaseConfig";
 import {
@@ -39,7 +39,6 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import LoadinSpinner from "../LoadinSpinner";
-import { useLocation } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   useReactTable,
@@ -50,14 +49,10 @@ import {
 } from "@tanstack/react-table";
 
 export default function ReservationHistory() {
-  // Obtener datos del usuario y estado de carga del contexto
-  const { userData, loading } = useContext(UserContext);
-  const location = useLocation();
-  // Estados para manejar las reservas y el ordenamiento
   const [reservations, setReservations] = useState([]);
   const [sorting, setSorting] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Función para asignar clases CSS según el estado de la reserva
   const getStatusBadge = (status) => {
     const statusStyles = {
       Devuelto: "bg-green-500 hover:bg-green-600",
@@ -69,10 +64,8 @@ export default function ReservationHistory() {
     return statusStyles[status] || statusStyles.default;
   };
 
-  // Definición de columnas para la tabla usando useMemo para optimización
   const columns = useMemo(
     () => [
-      // Columna para el título del libro
       {
         accessorFn: (row) => row.book || row.title,
         id: "book",
@@ -106,7 +99,6 @@ export default function ReservationHistory() {
     []
   );
 
-  // Configuración de la tabla usando useReactTable
   const table = useReactTable({
     data: reservations,
     columns,
@@ -116,7 +108,7 @@ export default function ReservationHistory() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(), // Agregar este
+    getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
         pageSize: 8,
@@ -124,15 +116,13 @@ export default function ReservationHistory() {
     },
   });
 
-  // Efecto para cargar y actualizar el historial de reservas
   useEffect(() => {
-    // Verificar autenticación del usuario
     if (!auth.currentUser) {
       toast.error("Usuario no autenticado");
+      setLoading(false);
       return;
     }
 
-    // Configurar referencia a la colección de historial
     const historyRef = collection(
       db,
       "users",
@@ -140,41 +130,55 @@ export default function ReservationHistory() {
       "reservationHistory"
     );
 
-    // Crear query ordenada por fecha de devolución
     const q = query(historyRef, orderBy("returnedAt", "desc"));
 
-    // Suscribirse a cambios en tiempo real
     const unsubscribe = onSnapshot(q, (snapshot) => {
       try {
-        const reservations = snapshot.docs.map((doc) => ({
+        const reservationsData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        setReservations(reservations);
+        setReservations(reservationsData);
+        setLoading(false);
       } catch (err) {
         toast.error("Error al cargar el historial: " + err.message);
+        setLoading(false);
       }
     });
 
-    // Limpiar suscripción al desmontar
     return () => unsubscribe();
-  }, [location.pathname]);
+  }, []);
 
-  // Mostrar spinner durante la carga
-  if (loading) {
-    return (
-      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
-        <CardContent className="flex justify-center items-center min-h-[300px]">
-          <LoadinSpinner />
-        </CardContent>
-      </Card>
-    );
-  }
+  // Función auxiliar para guardar notificaciones
+  const saveNotification = async (title, message, type) => {
+    try {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      await addDoc(notificationsRef, {
+        title,
+        message,
+        type,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error al guardar la notificación:", error);
+    }
+  };
 
-  // Función para limpiar todo el historial
   const handleClearHistory = async () => {
     if (!auth.currentUser) {
       toast.error("Usuario no autenticado");
+      return;
+    }
+
+    // Verificar si hay historial para limpiar
+    if (reservations.length === 0) {
+      toast.warning("No hay historial que limpiar");
       return;
     }
 
@@ -193,14 +197,22 @@ export default function ReservationHistory() {
       });
 
       await batch.commit();
+
+      // Guardar notificación de limpieza del historial
+      await saveNotification(
+        "Historial Limpiado",
+        "Se ha limpiado todo el historial de préstamos.",
+        "info"
+      );
+
       toast.success("Historial borrado exitosamente");
+      setReservations([]);
     } catch (err) {
       toast.error("Error al borrar el historial: " + err.message);
       console.error("Error al borrar el historial:", err);
     }
   };
 
-  // Función para mostrar el ícono de ordenamiento
   function getSortIcon(column) {
     const sorted = column.getIsSorted();
     if (!sorted) {
@@ -212,10 +224,18 @@ export default function ReservationHistory() {
     return <ChevronDown className="ml-2 h-4 w-4" />;
   }
 
-  // Renderizado del componente
+  if (loading) {
+    return (
+      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
+        <CardContent className="flex justify-center items-center min-h-[300px]">
+          <LoadinSpinner />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
-      {/* Cabecera de la tarjeta con título y botón de limpieza */}
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -230,11 +250,8 @@ export default function ReservationHistory() {
           </Button>
         </div>
       </CardHeader>
-
-      {/* Contenido principal: tabla o mensaje de no hay datos */}
       <CardContent>
         {reservations.length === 0 ? (
-          // Mostrar mensaje cuando no hay historial
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="rounded-full bg-background/10 p-3">
               <CalendarIcon className="h-10 w-10 text-muted-foreground" />
@@ -245,7 +262,6 @@ export default function ReservationHistory() {
             </p>
           </div>
         ) : (
-          // Mostrar tabla con el historial
           <div className="rounded-md border">
             <Table>
               <TableHeader>
