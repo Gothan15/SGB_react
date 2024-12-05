@@ -35,7 +35,7 @@ const BooksTab = () => {
 
   if (!booksTable) {
     return (
-      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+      <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>
@@ -44,7 +44,7 @@ const BooksTab = () => {
   }
 
   return (
-    <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200  bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
       <CardHeader>
         <CardTitle>Gestión de Libros</CardTitle>
         <CardDescription>
@@ -58,10 +58,12 @@ const BooksTab = () => {
             <SearchIcon className="h-4 w-4 mr-2" />
             Buscar
           </Button> */}
+
           <Dialog>
             <DialogTrigger className="absolute right-[65px]" asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="">
                 <BookPlus className="h-4 w-4" />
+                Agregar Nuevo Libro
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

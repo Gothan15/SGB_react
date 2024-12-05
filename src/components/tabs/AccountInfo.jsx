@@ -62,7 +62,7 @@ function AccountInfo() {
   }
 
   return (
-    <Card className="bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
       <CardHeader>
         <CardTitle>Información de la Cuenta</CardTitle>
         <CardDescription>Tus detalles de usuario.</CardDescription>

@@ -623,7 +623,7 @@ const Register = () => {
         <div className="flex min-h-screen">
           <div className="flex w-1/2 items-end p-12">
             <div className="space-y-4">
-              <blockquote className="  backdrop:blur-sm bg-[#000000] bg-opacity-20 rounded-lg indent-8 text-[#f5f5f5] font-serif text-3xl font-medium leading-tight">
+              <blockquote className="  backdrop-blur bg-transparent bg-opacity-70 rounded-lg indent-8 text-[#f5f5f5] font-serif text-3xl font-medium leading-tight">
                 "El sitio web de esta biblioteca ha revolucionado la forma en
                 que accedo a la información, ahorrándome innumerables horas de
                 investigación y ayudándome a encontrar los recursos que necesito

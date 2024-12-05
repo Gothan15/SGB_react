@@ -96,7 +96,7 @@ function ReportsTab() {
   };
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart className="h-6 w-6" />

@@ -71,6 +71,8 @@ import {
   RefreshCw,
   ArrowLeftRight,
   Search,
+  Users,
+  LayoutDashboard,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import BookReservationForm from "./dialogs/book-reservation-form";
@@ -85,10 +87,15 @@ import BorrowedBooks from "./tabs/BorrowedBooks";
 import AccountInfo from "./tabs/AccountInfo";
 import { Toaster, toast } from "sonner";
 import LoadinSpinner from "./LoadinSpinner";
+import WelcomeUser from "./welcome-user";
+import PanelHeader from "./panel-header";
+import LogoutDrawer from "./ui/LogoutDrawer";
 
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [IconLocation, seticonLocation] = useState();
 
   // Estados agrupados por funcionalidad
   const [userData, setUserData] = useState({
@@ -580,31 +587,37 @@ const UserDashboard = () => {
     >
       <div className="md:w-[1920px] min-h-screen md:mx-auto p-6 bg-black bg-opacity-30 backdrop-blur-sm">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl text-black font-bold border-0 shadow-md shadow-black rounded-lg text-center py-1 px-2 bg-white bg-opacity-100">
+          {/* <h1 className="text-3xl text-black font-bold border-0 shadow-md shadow-black rounded-lg text-center py-1 px-2 bg-white bg-opacity-100">
             Panel de Usuario
-          </h1>
-          <div className="absolute right-[180px] top-[83px] rounded-md shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70">
+          </h1> */}
+          <div className="rounded-md shadow-md shadow-black">
+            <PanelHeader
+              panelName="Panel de Usuario"
+              locationName={IconLocation}
+            />
+          </div>
+
+          <div className="absolute left-[300px]  ml-4 rounded-md shadow-md shadow-black font-semibold  text-black ">
+            <WelcomeUser />
+          </div>
+          <div className="absolute right-[190px] top-[83px]">
             <NotificationButton
               notifications={notifications}
               onClear={clearNotifications}
             />
           </div>
         </div>
-        <Button
-          className="border-0  absolute right-6 top-[83px] pl-3 shadow-md shadow-black font-semibold h hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70"
-          variant="outline"
-          onClick={handleLogout}
-        >
-          <FaPowerOff className="" />
-          Cerrar Sesión
-        </Button>
+        <div className="absolute right-6 top-[83px]">
+          <LogoutDrawer onLogout={handleLogout} />
+        </div>
 
         <Tabs value={location.pathname.split("/").pop()} className="space-y-4">
-          <TabsList className="border-2">
+          <TabsList className="border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
             <TabsTrigger value="available" asChild>
               <NavLink
+                onClick={() => seticonLocation("Libros Disponibles")}
                 to="available"
-                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black  items-center bg-opacity-90"
               >
                 <BookIcon className="mr-2 h-4 w-4" />
                 Libros Disponibles
@@ -612,8 +625,9 @@ const UserDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="borrowed" asChild>
               <NavLink
+                onClick={() => seticonLocation("Libros Prestados")}
                 to="borrowed"
-                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black  items-center bg-opacity-90"
               >
                 <BookOpenIcon className="mr-2 h-4 w-4" />
                 Libros Prestados
@@ -621,8 +635,9 @@ const UserDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="reservations" asChild>
               <NavLink
+                onClick={() => seticonLocation("Historial de Reservas")}
                 to="reservations"
-                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black  items-center bg-opacity-90"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 Historial de Reservas
@@ -630,8 +645,9 @@ const UserDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="account" asChild>
               <NavLink
+                onClick={() => seticonLocation("Mi Cuenta")}
                 to="account"
-                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black  items-center bg-opacity-90"
               >
                 <UserIcon className="mr-2 h-4 w-4" />
                 Mi Cuenta

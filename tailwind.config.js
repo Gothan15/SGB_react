@@ -13,9 +13,14 @@ module.exports = withMT({
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(-20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "caret-blink": "caret-blink 1.25s ease-out infinite",
+        "fade-in": "fade-in 0.5s ease-out",
       },
       borderRadius: {
         lg: "var(--radius)",

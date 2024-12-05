@@ -138,7 +138,7 @@ const SupportTab = () => {
   });
 
   return (
-    <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200  bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
       <CardHeader>
         <CardTitle>Centro de Soporte y Reportes</CardTitle>
         <CardDescription>

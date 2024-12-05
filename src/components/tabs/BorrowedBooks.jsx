@@ -61,7 +61,7 @@ function BorrowedBooks() {
   }
 
   return (
-    <Card className="bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
       <CardHeader>
         <CardTitle>Libros Prestados</CardTitle>
         <CardDescription>
@@ -184,7 +184,11 @@ function BorrowedBooks() {
                           <div className="flex space-x-2">
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button size="sm" variant="outline">
+                                <Button
+                                  className=""
+                                  size="sm"
+                                  variant="outline"
+                                >
                                   <RefreshCw className="mr-2 h-4 w-4" />
                                   Renovar
                                 </Button>

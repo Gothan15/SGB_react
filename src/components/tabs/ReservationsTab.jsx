@@ -36,7 +36,7 @@ const ReservationsTab = () => {
   // Añadir esta sección para mostrar mensaje cuando no hay reservas
   if (data.pendingReservations.length === 0) {
     return (
-      <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white mt-6">
+      <Card className=" bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white ">
         <CardHeader>
           <CardTitle>Solicitudes de Reservas Pendientes</CardTitle>
           <CardDescription>
@@ -58,7 +58,7 @@ const ReservationsTab = () => {
   }
 
   return (
-    <Card className="bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white mt-6">
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white mt-6">
       <CardHeader>
         <CardTitle>Solicitudes de Reservas Pendientes</CardTitle>
         <CardDescription>

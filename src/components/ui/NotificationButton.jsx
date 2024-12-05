@@ -15,7 +15,10 @@ const NotificationButton = ({ notifications, onClear }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
+        <Button
+          variant="ghost"
+          className="border-0 absolute  right-[15px]  shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 transition-colors duration-300 bg-white bg-opacity-70"
+        >
           <BellIcon className="h-6 w-6" />
           {notifications.length > 0 && <Bubble count={notifications.length} />}
         </Button>
