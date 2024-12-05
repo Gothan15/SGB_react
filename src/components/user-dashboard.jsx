@@ -604,7 +604,7 @@ const UserDashboard = () => {
             <TabsTrigger value="available" asChild>
               <NavLink
                 to="available"
-                className="hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
               >
                 <BookIcon className="mr-2 h-4 w-4" />
                 Libros Disponibles
@@ -613,7 +613,7 @@ const UserDashboard = () => {
             <TabsTrigger value="borrowed" asChild>
               <NavLink
                 to="borrowed"
-                className="hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
               >
                 <BookOpenIcon className="mr-2 h-4 w-4" />
                 Libros Prestados
@@ -622,7 +622,7 @@ const UserDashboard = () => {
             <TabsTrigger value="reservations" asChild>
               <NavLink
                 to="reservations"
-                className="hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 Historial de Reservas
@@ -631,7 +631,7 @@ const UserDashboard = () => {
             <TabsTrigger value="account" asChild>
               <NavLink
                 to="account"
-                className="hover:border-2 hover:border-black items-center bg-opacity-90"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
               >
                 <UserIcon className="mr-2 h-4 w-4" />
                 Mi Cuenta

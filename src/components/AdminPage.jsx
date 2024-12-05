@@ -662,6 +662,10 @@ const AdminPage = () => {
         type: "reservation_approved",
       });
 
+      // Obtener datos del usuario
+      const userDoc = await getDoc(doc(db, "users", userId));
+      const userData = userDoc.data();
+
       // Notificación para todos los administradores
       const adminsSnapshot = await getDocs(
         query(collection(db, "users"), where("role", "==", "admin"))
@@ -672,7 +676,7 @@ const AdminPage = () => {
           collection(db, "users", adminDoc.id, "notifications")
         );
         batch.set(adminNotificationRef, {
-          message: `Reserva aprobada: "${bookData.title}" para el usuario ${userId}`,
+          message: `Reserva aprobada: "${bookData.title}" para el usuario ${userData.name}`,
           createdAt: timestamp,
           read: false,
           type: "admin_reservation_approved",
@@ -741,6 +745,10 @@ const AdminPage = () => {
         type: "reservation_rejected",
       });
 
+      // Obtener datos del usuario
+      const userDoc = await getDoc(doc(db, "users", userId));
+      const userData = userDoc.data();
+
       // Notificación para todos los administradores
       const adminsSnapshot = await getDocs(
         query(collection(db, "users"), where("role", "==", "admin"))
@@ -751,7 +759,7 @@ const AdminPage = () => {
           collection(db, "users", adminDoc.id, "notifications")
         );
         batch.set(adminNotificationRef, {
-          message: `Reserva rechazada: "${bookData.title}" para el usuario ${userId}`,
+          message: `Reserva rechazada: "${bookData.title}" para el usuario ${userData.name}`,
           createdAt: timestamp,
           read: false,
           type: "admin_reservation_rejected",
@@ -1122,7 +1130,7 @@ const AdminPage = () => {
               to="reports"
               className="flex hover:shadow-black hover:shadow-lg hover:border-2 hover:border-black items-center bg-opacity-90"
             >
-              <BarChart className="mr-2 h-4 w-4" /> {/* Usando BarChart */}
+              <BarChart className="mr-2 h-4 w-4" />
               Informes
             </NavLink>
           </TabsTrigger>

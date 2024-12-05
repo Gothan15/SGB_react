@@ -53,13 +53,15 @@ export default function BookReservationForm({ onReserve, book }) {
               <strong>Autor:</strong> {book.author}
             </p>
           </div>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            disabled={(date) => date < today || date > maxDate}
-            className="rounded-md border"
-          />
+          <div className="">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              disabled={(date) => date < today || date > maxDate}
+              className="rounded-md border flex relative justify-center items-center"
+            />
+          </div>
           {selectedDate && (
             <p className="text-sm text-muted-foreground">
               Fecha seleccionada: {selectedDate.toLocaleDateString()}
