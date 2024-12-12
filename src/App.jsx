@@ -10,7 +10,6 @@ import { Toaster } from "sonner";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { LoadingScreen } from "./components/ui/LoadingScreen";
 import PrivateRoute from "./components/PrivateRoute";
-//import SuspenseWrapper from "./components/ui/SuspenseWrapper";
 import { routes, defaultRoutes } from "./routes";
 import PageLoader from "./components/ui/PageLoader";
 
@@ -20,19 +19,6 @@ const Register = lazy(() => import("./components/Register"));
 const BibPage = lazy(() => import("./components/Bibliotecario-dashboard"));
 const AdminPage = lazy(() => import("./components/Admin-dashboard"));
 const UserDashboard = lazy(() => import("./components/User-dashboard"));
-
-// Importaciones dinámicas de tabs
-//const AvailableBooks = lazy(() => import("./components/tabs/AvailableBooks"));
-//const BorrowedBooks = lazy(() => import("./components/tabs/BorrowedBooks"));
-//const ReservationHistory = lazy(() =>
-//  import("./components/tabs/ReservationHistory")
-//);
-//const AccountInfo = lazy(() => import("./components/tabs/AccountInfo"));
-//const ReservationsTab = lazy(() => import("./components/tabs/ReservationsTab"));
-//const UsersTab = lazy(() => import("./components/tabs/UsersTab"));
-//const BooksTab = lazy(() => import("./components/tabs/BooksTab"));
-//const ReportsTab = lazy(() => import("./components/tabs/ReportsTab"));
-//const SupportTab = lazy(() => import("./components/tabs/SupportTab"));
 
 function App() {
   const [userRole, setUserRole] = useState(null);

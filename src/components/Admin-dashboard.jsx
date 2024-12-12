@@ -28,8 +28,6 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import { flexRender } from "@tanstack/react-table";
 import {
   UsersIcon,
-  CalendarIcon,
-  BookIcon,
   ChevronsUpDown,
   ChevronUp,
   ChevronDown,
@@ -57,10 +55,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import NotificationButton from "./ui/NotificationButton";
 import PanelHeader from "./ui/panel-header";
 import WelcomeUser from "./ui/welcome-user";
-import LogoutDrawer from "./ui/LogoutDrawer";
 import LoadinSpinner from "./ui/LoadinSpinner";
 import Sidebar from "./sidebar-dashboards";
 import Bubble from "./ui/Bubble";
@@ -503,15 +499,7 @@ const AdminPage = () => {
           <div className="absolute left-[300px]  ml-4 rounded-md shadow-md shadow-black font-semibold  text-black ">
             <WelcomeUser />
           </div>
-          {/* <div
-            //className="absolute right-[200px] top-[83px] rounded-md shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 transition-colors duration-300 bg-white bg-opacity-70"
-            className="absolute right-[190px] top-[83px]"
-          >
-            <NotificationButton
-              notifications={notifications}
-              setNotifications={setNotifications}
-            />
-          </div> */}
+
           <div className="fixed bottom-6 right-6 z-50">
             <button
               className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
@@ -541,23 +529,10 @@ const AdminPage = () => {
               userInfo={userData.userInfo}
             />
           </div>
-          {/* <div className="absolute right-6 top-[83px]">
-            <LogoutDrawer />
-          </div> */}
         </div>
 
         <Tabs value={location.pathname.split("/").pop()} className="space-y-4">
           <TabsList className="border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
-            {/* <TabsTrigger value="reservations" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Reservas")}
-                to="reservations"
-                className="flex  hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Reservas
-              </NavLink>
-            </TabsTrigger> */}
             <TabsTrigger value="users" asChild>
               <NavLink
                 onClick={() => handleNavLinkClick("Usuarios")}
@@ -568,16 +543,7 @@ const AdminPage = () => {
                 Usuarios
               </NavLink>
             </TabsTrigger>
-            {/* <TabsTrigger value="books" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Libros")}
-                to="books"
-                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <BookIcon className="mr-2 h-4 w-4" />
-                Libros
-              </NavLink>
-            </TabsTrigger> */}
+
             <TabsTrigger value="reports" asChild>
               <NavLink
                 onClick={() => handleNavLinkClick("Informes")}

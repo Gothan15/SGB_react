@@ -31,7 +31,7 @@ import ChatButton from "./ui/ChatButton";
 import UserContext from "./UserContext";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import React, { memo, useEffect, useState } from "react";
-import NotificationButton from "./ui/NotificationButton";
+
 import { db } from "@/firebaseConfig";
 import ForcePasswordChangeDialog from "./dialogs/ForcePasswordChangeDialog";
 import PasswordExpirationCheck from "./auth/PasswordExpirationCheck";
@@ -50,7 +50,6 @@ import { toast } from "sonner";
 import LoadinSpinner from "./ui/LoadinSpinner";
 import WelcomeUser from "./ui/welcome-user";
 import PanelHeader from "./ui/panel-header";
-import LogoutDrawer from "./ui/LogoutDrawer";
 import Sidebar from "./sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 import ReauthDialog from "./ui/ReauthDialog";
@@ -355,12 +354,7 @@ const UserDashboard = () => {
                 userInfo={userData.userInfo}
               />
             </div>
-            {/* <div className="absolute right-[190px] top-[83px]">
-            <NotificationButton
-              notifications={notifications}
-              setNotifications={setNotifications}
-            />
-          </div> */}
+
             <div className="fixed bottom-6 right-6 z-50">
               <button
                 className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
