@@ -1,9 +1,10 @@
 /* eslint-disable no-unused-vars */
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
-import { useOutletContext } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -35,15 +36,36 @@ import { MostRequestedDialog } from "@/components/dialogs/MostRequestedDialog";
 import { ReservationStatusDialog } from "@/components/dialogs/ReservationStatusDialog";
 
 function ReportsTab() {
-  const { data } = useOutletContext();
-  const [waitTimeData, setWaitTimeData] = React.useState([]);
-  const [mostRequestedData, setMostRequestedData] = React.useState([]);
-  const [reservationStatusData, setReservationStatusData] = React.useState([]);
+  // Eliminar el uso de useOutletContext
+  // const { data } = useOutletContext();
 
+  // Estados locales
+  const [reservations, setReservations] = useState([]);
+  const [waitTimeData, setWaitTimeData] = useState([]);
+  const [mostRequestedData, setMostRequestedData] = useState([]);
+  const [reservationStatusData, setReservationStatusData] = useState([]);
+
+  useEffect(() => {
+    // Obtener datos necesarios desde Firebase
+    const fetchReservations = async () => {
+      const reservationsSnapshot = await getDocs(
+        collection(db, "reservations")
+      );
+      const reservationsData = reservationsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setReservations(reservationsData);
+    };
+
+    fetchReservations();
+  }, []);
+
+  // Funciones para generar informes usando los estados locales
   const generateWaitTimeReport = () => {
-    if (!data?.reservations) return;
+    if (!reservations.length) return;
 
-    const waitTimeData = data.reservations.map((res) => ({
+    const waitTimeData = reservations.map((res) => ({
       Usuario: res.userName,
       Libro: res.bookTitle,
       "Fecha Solicitud": res.requestedAt?.toDate().toLocaleDateString(),
@@ -59,10 +81,10 @@ function ReportsTab() {
   };
 
   const generateMostRequestedReport = () => {
-    if (!data?.reservations) return;
+    if (!reservations.length) return;
 
     const bookRequests = {};
-    data.reservations.forEach((res) => {
+    reservations.forEach((res) => {
       bookRequests[res.bookTitle] = (bookRequests[res.bookTitle] || 0) + 1;
     });
 
@@ -74,9 +96,9 @@ function ReportsTab() {
   };
 
   const generateReservationStatusReport = () => {
-    if (!data?.reservations) return;
+    if (!reservations.length) return;
 
-    const statusCount = data.reservations.reduce((acc, res) => {
+    const statusCount = reservations.reduce((acc, res) => {
       acc[res.status] = (acc[res.status] || 0) + 1;
       return acc;
     }, {});

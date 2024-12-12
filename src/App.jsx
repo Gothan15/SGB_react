@@ -1,8 +1,8 @@
 //* eslint-disable no-unused-vars */
-import ATMPage from "./components/ATMPage";
-import AdminPage from "./components/AdminPage";
+import BibPage from "./components/Bibliotecario-dashboard";
+import AdminPage from "./components/Admin-dashboard";
 import Register from "./components/Register";
-import UserDashboard from "./components/user-dashboard";
+import UserDashboard from "./components/User-dashboard";
 import Home from "./components/Home";
 import AvailableBooks from "./components/tabs/AvailableBooks";
 import BorrowedBooks from "./components/tabs/BorrowedBooks";
@@ -14,16 +14,21 @@ import BooksTab from "./components/tabs/BooksTab";
 import ReportsTab from "./components/tabs/ReportsTab";
 import SupportTab from "./components/tabs/SupportTab";
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  // as Router
+  Routes,
+  Route,
+} from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState, memo } from "react";
 import PrivateRoute from "./components/PrivateRoute";
 import { auth, db } from "./firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import { LoadingScreen } from "./components/LoadingScreen";
+import { LoadingScreen } from "./components/ui/LoadingScreen";
 import { Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
-import { SpeedInsights } from "@vercel/speed-insights/react";
+import { SidebarProvider } from "./components/ui/sidebar";
 
 function App() {
   const [userRole, setUserRole] = useState(null);
@@ -33,6 +38,9 @@ function App() {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // Forzamos la actualización del token para obtener las custom claims
+        await user.getIdToken(true);
+
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           setUserRole(userDoc.data().role);
@@ -57,48 +65,69 @@ function App() {
 
   return (
     <div
-      className="text-white min-h-[100vh] flex justify-center items-center bg-center bg-cover  "
+      className="text-white min-h-[100vh] flex justify-center items-center bg-center bg-cover"
       style={{ backgroundImage: "url('/img/bg.jpeg')" }}
     >
-      <SpeedInsights />
       <Toaster richColors closeButton position="bottom-right" />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/atm" element={<ATMPage />} />
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute userRole={userRole} requiredRole="admin">
-                <AdminPage />
-              </PrivateRoute>
-            }
-          >
-            <Route index element={<Navigate to="reservations" />} />
-            <Route path="reservations" element={<ReservationsTab />} />
-            <Route path="users" element={<UsersTab />} />
-            <Route path="books" element={<BooksTab />} />
-            <Route path="reports" element={<ReportsTab />} />
-            <Route path="support" element={<SupportTab />} />
-            {/* tickets={data.supportTickets} */}
-          </Route>
-          <Route
-            path="/student"
-            element={
-              <PrivateRoute userRole={userRole} requiredRole="student">
-                <UserDashboard />
-              </PrivateRoute>
-            }
-          >
-            <Route index element={<Navigate to="borrowed" />} />
-            <Route path="available" element={<AvailableBooks />} />
-            <Route path="borrowed" element={<BorrowedBooks />} />
-            <Route path="reservations" element={<ReservationHistory />} />
-            <Route path="account" element={<AccountInfo />} />
-          </Route>
-        </Routes>
-      </Router>
+      {/* <Router> */}
+      <SidebarProvider>
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/atm"
+              element={
+                <PrivateRoute userRole={userRole} requiredRole="atm">
+                  <BibPage />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<Navigate to="reservations" />} />
+              <Route path="reservations" element={<ReservationsTab />} />
+
+              <Route path="books" element={<BooksTab />} />
+              <Route path="account" element={<AccountInfo />} />
+
+              {/* tickets={data.supportTickets} */}
+            </Route>
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute userRole={userRole} requiredRole="admin">
+                  <AdminPage />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<Navigate to="users" />} />
+              {/* <Route path="reservations" element={<ReservationsTab />} /> */}
+              <Route path="users" element={<UsersTab />} />
+              {/* <Route path="books" element={<BooksTab />} /> */}
+              <Route path="reports" element={<ReportsTab />} />
+              <Route path="support" element={<SupportTab />} />
+              <Route path="account" element={<AccountInfo />} />
+              {/* tickets={data.supportTickets} */}
+            </Route>
+            <Route
+              path="/student"
+              element={
+                <PrivateRoute userRole={userRole} requiredRole="student">
+                  <UserDashboard />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<Navigate to="borrowed" />} />
+              <Route path="available" element={<AvailableBooks />} />
+              <Route path="borrowed" element={<BorrowedBooks />} />
+              <Route path="reservations" element={<ReservationHistory />} />
+              <Route path="account" element={<AccountInfo />} />
+            </Route>
+          </Routes>
+          {/* </Router> */}
+        </BrowserRouter>
+      </SidebarProvider>
     </div>
   );
 }

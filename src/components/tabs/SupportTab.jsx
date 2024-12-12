@@ -1,4 +1,7 @@
-import { useOutletContext } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
+import { toast } from "sonner";
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,9 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
-import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -26,12 +26,28 @@ import {
 } from "../ui/card";
 import { MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 
 const SupportTab = () => {
-  const { data, renderTable } = useOutletContext();
-  const tickets = data.supportTickets || [];
+  const [tickets, setTickets] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "support_tickets"),
+      (snapshot) => {
+        const ticketsData = snapshot.docs.map((docSnapshot) => ({
+          id: docSnapshot.id,
+          ...docSnapshot.data(),
+        }));
+        setTickets(ticketsData);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+  const { renderTable } = useOutletContext();
+  //const tickets = data.supportTickets || [];
 
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
@@ -140,7 +156,7 @@ const SupportTab = () => {
   });
 
   return (
-    <Card className="bg-gradient-to-br from-white to-gray-200  bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
       <CardHeader>
         <CardTitle>Centro de Soporte y Reportes</CardTitle>
         <CardDescription>

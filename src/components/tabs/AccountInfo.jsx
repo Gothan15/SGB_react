@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import LoadinSpinner from "../LoadinSpinner";
+import LoadinSpinner from "../ui/LoadinSpinner";
 import { auth, db } from "@/firebaseConfig";
 import {
   doc,
@@ -27,6 +27,8 @@ import {
 import { Button } from "@/components/ui/button";
 import ProfileEditForm from "../dialogs/profile-edit-form";
 import { toast } from "sonner";
+import ChangePasswordDialog from "../dialogs/ChangePasswordDialog";
+import SendEmailVerificationDialog from "../dialogs/SendEmailVerificationDialog";
 
 const formatPhoneNumber = (phone, region = "ES") => {
   if (!phone) return "No especificado";
@@ -59,6 +61,8 @@ function AccountInfo() {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showSendVerification, setShowSendVerification] = useState(false);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -121,6 +125,8 @@ function AccountInfo() {
       "Tu información de perfil ha sido actualizada correctamente",
       "success"
     );
+
+    // Ya no es necesario manejar la actualización del historial aquí
   };
 
   if (loading || !userInfo) {
@@ -176,26 +182,54 @@ function AccountInfo() {
               </p>
             </div>
           </div>
-          <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
-            <DialogTrigger asChild>
-              <Button className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white">
-                Editar Perfil
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Editar Perfil</DialogTitle>
-                <DialogDescription>
-                  Actualiza tu información personal
-                </DialogDescription>
-              </DialogHeader>
-              <ProfileEditForm
-                user={userInfo}
-                onSuccess={handleSuccess}
-                onClose={() => setShowEditProfile(false)}
+          <div className="flex space-x-2">
+            <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
+              <DialogTrigger asChild>
+                <Button className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white">
+                  Editar Perfil
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Editar Perfil</DialogTitle>
+                  <DialogDescription>
+                    Actualiza tu información personal
+                  </DialogDescription>
+                </DialogHeader>
+                <ProfileEditForm
+                  user={userInfo}
+                  onSuccess={handleSuccess}
+                  onClose={() => setShowEditProfile(false)}
+                />
+              </DialogContent>
+            </Dialog>
+            <ChangePasswordDialog
+              isOpen={showChangePassword}
+              onOpenChange={setShowChangePassword}
+              triggerButton={
+                <Button
+                  onClick={() => setShowChangePassword(true)}
+                  className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white"
+                >
+                  Cambiar Contraseña
+                </Button>
+              }
+            />
+            {!auth.currentUser.emailVerified && (
+              <SendEmailVerificationDialog
+                isOpen={showSendVerification}
+                onOpenChange={setShowSendVerification}
+                triggerButton={
+                  <Button
+                    onClick={() => setShowSendVerification(true)}
+                    className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white"
+                  >
+                    Verificar Email
+                  </Button>
+                }
               />
-            </DialogContent>
-          </Dialog>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -10,8 +10,33 @@ import {
 import { Button } from "@/components/ui/button";
 import PropTypes from "prop-types";
 import Bubble from "./Bubble";
+import { collection, getDocs, writeBatch } from "firebase/firestore";
+import { auth, db } from "@/firebaseConfig";
+import { useCallback } from "react";
 
-const NotificationButton = ({ notifications, onClear }) => {
+const NotificationButton = ({ notifications, setNotifications }) => {
+  const clearNotifications = useCallback(async () => {
+    if (!auth.currentUser) return;
+    try {
+      const notificationsRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "notifications"
+      );
+      const snapshot = await getDocs(notificationsRef);
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      setNotifications([]);
+    } catch (error) {
+      console.error("Error al limpiar notificaciones:", error);
+    }
+  }, [setNotifications]);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -30,7 +55,7 @@ const NotificationButton = ({ notifications, onClear }) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClear}
+              onClick={clearNotifications}
               className="hover:bg-red-100"
             >
               <Trash2 className="h-4 w-4 text-red-500" />
@@ -53,12 +78,8 @@ const NotificationButton = ({ notifications, onClear }) => {
 };
 
 NotificationButton.propTypes = {
-  notifications: PropTypes.arrayOf(
-    PropTypes.shape({
-      message: PropTypes.string.isRequired,
-    })
-  ).isRequired,
-  onClear: PropTypes.func.isRequired,
+  notifications: PropTypes.array.isRequired,
+  setNotifications: PropTypes.func.isRequired,
 };
 
 export default NotificationButton;

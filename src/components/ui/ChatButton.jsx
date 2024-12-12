@@ -17,7 +17,7 @@ const ChatButton = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          className="fixed bottom-4 right-4 rounded-full p-4 shadow-lg hover:shadow-xl bg-white text-black hover:bg-black hover:text-white transition-all duration-300"
+          className="fixed bottom-4 left-4 rounded-full p-4 shadow-lg hover:shadow-xl bg-white text-black hover:bg-black hover:text-white transition-all duration-300"
           size="icon"
         >
           <MessageSquare className="h-6 w-6" />

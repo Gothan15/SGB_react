@@ -43,7 +43,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/firebaseConfig";
 import { toast } from "sonner";
-import LoadinSpinner from "../LoadinSpinner";
+import LoadinSpinner from "../ui/LoadinSpinner";
 import { Badge } from "../ui/badge";
 
 function BorrowedBooks() {
@@ -355,12 +355,11 @@ function BorrowedBooks() {
             {borrowedBooks.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold my-4">
-                  Libros Prestados Actualmente
+                  Libros Reservados Actualmente
                 </h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Autor</TableHead>
                       <TableHead>Fecha de Devolución</TableHead>
@@ -370,7 +369,6 @@ function BorrowedBooks() {
                   <TableBody>
                     {borrowedBooks.map((book) => (
                       <TableRow key={book.id}>
-                        <TableCell>{book.id}</TableCell>
                         <TableCell>{book.title}</TableCell>
                         <TableCell>{book.author}</TableCell>
                         <TableCell>

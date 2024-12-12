@@ -49,7 +49,7 @@ import { BookIcon, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import BookReservationForm from "../dialogs/book-reservation-form";
 import { flexRender } from "@tanstack/react-table";
-import LoadinSpinner from "../LoadinSpinner";
+import LoadinSpinner from "../ui/LoadinSpinner";
 
 function AvailableBooks() {
   const [availableBooks, setAvailableBooks] = useState([]);
@@ -80,10 +80,10 @@ function AvailableBooks() {
 
   const columns = React.useMemo(
     () => [
-      {
-        accessorKey: "id",
-        header: "ID",
-      },
+      // {
+      //   accessorKey: "id",
+      //   header: "ID",
+      // },
       {
         accessorKey: "title",
         header: "Título",
@@ -176,11 +176,13 @@ function AvailableBooks() {
         collection(db, "users", auth.currentUser.uid, "notifications")
       );
       await setDoc(notificationRef, {
+        title: "Reserva Solicitada",
         message: `Has solicitado el libro "${
           book.title
         }" para entregar el ${selectedDate.toLocaleDateString()}.`,
         createdAt: Timestamp.fromDate(new Date()),
         read: false,
+        type: "info",
       });
 
       toast.success("Solicitud de reserva enviada correctamente", {
@@ -242,14 +244,6 @@ function AvailableBooks() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center space-x-2 mb-4">
-          <Input
-            placeholder="Buscar por título o autor"
-            className="max-w-sm"
-            value={table.getState().globalFilter ?? ""}
-            onChange={(e) => table.setGlobalFilter(e.target.value)}
-          />
-        </div>
         {table.getRowModel().rows.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="rounded-full bg-background/10 p-3">
@@ -263,53 +257,63 @@ function AvailableBooks() {
             </p>
           </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.column.getCanSort() ? (
-                          <div
-                            className="flex cursor-pointer items-center"
-                            onClick={() => header.column.toggleSorting()}
-                          >
-                            {flexRender(
+          <div>
+            <div className="flex items-center space-x-2 mb-4">
+              <Input
+                placeholder="Buscar por título o autor"
+                className="max-w-sm"
+                value={table.getState().globalFilter ?? ""}
+                onChange={(e) => table.setGlobalFilter(e.target.value)}
+              />
+            </div>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id}>
+                          {header.column.getCanSort() ? (
+                            <div
+                              className="flex cursor-pointer items-center"
+                              onClick={() => header.column.toggleSorting()}
+                            >
+                              {flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                              {getSortIcon(header.column)}
+                            </div>
+                          ) : (
+                            flexRender(
                               header.column.columnDef.header,
                               header.getContext()
-                            )}
-                            {getSortIcon(header.column)}
-                          </div>
-                        ) : (
-                          flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {cell.column.id === "status"
-                          ? getStatusBadge(cell.getValue())
-                          : flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                      </TableCell>
-                    ))}
-                    <TableCell></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                            )
+                          )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {cell.column.id === "status"
+                            ? getStatusBadge(cell.getValue())
+                            : flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                        </TableCell>
+                      ))}
+                      <TableCell></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
         <div className="flex items-center justify-end space-x-2 py-4">

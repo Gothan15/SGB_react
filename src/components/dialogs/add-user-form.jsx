@@ -78,9 +78,9 @@ export default function AddUserForm({ onSave }) {
             required
           />
         </div>
-        {/* <div className="space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="role">Rol</Label>
-          <Select value={role} onValueChange={setRole}>
+          <Select value={role} onValueChange={setRole} required>
             <SelectTrigger>
               <SelectValue placeholder="Selecciona un rol" />
             </SelectTrigger>
@@ -90,7 +90,7 @@ export default function AddUserForm({ onSave }) {
               <SelectItem value="atm">Bibliotecario</SelectItem>
             </SelectContent>
           </Select>
-        </div> */}
+        </div>
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña generada</Label>
           <div className="flex space-x-2">

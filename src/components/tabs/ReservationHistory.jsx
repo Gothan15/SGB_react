@@ -38,7 +38,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import LoadinSpinner from "../LoadinSpinner";
+import LoadinSpinner from "../ui/LoadinSpinner";
 import { Badge } from "@/components/ui/badge";
 import {
   useReactTable,

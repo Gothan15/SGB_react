@@ -9,18 +9,50 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { auth, db } from "@/firebaseConfig";
+import { signOut } from "firebase/auth";
+import { deleteDoc, doc } from "firebase/firestore";
 import { LogOut } from "lucide-react";
-import { FaPowerOff } from "react-icons/fa";
+import { useCallback } from "react";
+//import { FaPowerOff } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
-const LogoutDrawer = ({ onLogout }) => {
+const LogoutDrawer = () => {
+  const navigate = useNavigate();
+  const handleLogout = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      // Eliminar el browserSessionId del localStorage
+      localStorage.removeItem("browserSessionId");
+
+      // Primero eliminar el registro de sesión activa
+      const sessionRef = doc(db, "activeSessions", user.uid);
+      await deleteDoc(sessionRef);
+
+      // Luego cerrar la sesión
+      await signOut(auth);
+      toast.success("Sesión cerrada exitosamente");
+      navigate("/register", { replace: true });
+    } catch (error) {
+      toast.error("Error al cerrar sesión");
+      console.error("Error al cerrar sesión:", error);
+    }
+  }, [navigate]);
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button
+        {/* <Button
           variant="outline"
           className="border-0 absolute  right-[15px]  shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 transition-colors duration-300 bg-white bg-opacity-70"
         >
           <FaPowerOff className="mr-2 h-4 w-4" />
+          Cerrar Sesión
+        </Button> */}
+        <Button variant="outline" className="w-full justify-start">
+          <LogOut className="mr-2 h-4 w-4" />
           Cerrar Sesión
         </Button>
       </DrawerTrigger>
@@ -47,7 +79,7 @@ const LogoutDrawer = ({ onLogout }) => {
           </div>
           <DrawerFooter>
             <Button
-              onClick={onLogout}
+              onClick={handleLogout}
               variant="destructive"
               className="hover:bg-gradient-to-l hover:border-black hover:font-semibold from-red-700 transition-colors duration-200 to-black   w-full"
             >
