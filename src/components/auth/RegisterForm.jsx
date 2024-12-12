@@ -98,19 +98,23 @@ const RegisterForm = ({
   // Redirige según el rol del usuario
   const handleRedirect = useCallback(
     (role) => {
-      switch (role) {
-        case "admin":
-          navigate("/admin");
-          break;
-        case "atm":
-          navigate("/atm");
-          break;
-        case "student":
-          navigate("/student");
-          break;
-        default:
-          navigate("/register");
-      }
+      setUiState((prev) => ({ ...prev, loading: true }));
+      // Pequeño delay para asegurar que los estados se actualicen
+      setTimeout(() => {
+        switch (role) {
+          case "admin":
+            navigate("/admin", { replace: true });
+            break;
+          case "atm":
+            navigate("/atm", { replace: true });
+            break;
+          case "student":
+            navigate("/student", { replace: true });
+            break;
+          default:
+            navigate("/register", { replace: true });
+        }
+      }, 100);
     },
     [navigate]
   );
@@ -142,35 +146,7 @@ const RegisterForm = ({
   const handleRegister = useCallback(
     async (e) => {
       e.preventDefault();
-
-      // Verificar validación de email
-      if (!emailValidation.isValid || !emailValidation.isAvailable) {
-        setUiState((prev) => ({
-          ...prev,
-          error: "Por favor use un correo electrónico válido y disponible",
-        }));
-        return;
-      }
-
-      setUiState((prevState) => ({ ...prevState, loading: true }));
-
-      if (!formData.email || !formData.password || !formData.name) {
-        setUiState((prevState) => ({
-          ...prevState,
-          error: "Por favor llene todos los campos",
-          loading: false,
-        }));
-        return;
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        setUiState((prevState) => ({
-          ...prevState,
-          error: "Contraseñas no concuerdan",
-          loading: false,
-        }));
-        return;
-      }
+      setUiState((prev) => ({ ...prev, loading: true }));
 
       try {
         const userCredential = await createUserWithEmailAndPassword(
@@ -178,21 +154,13 @@ const RegisterForm = ({
           formData.email,
           formData.password
         );
-        const user = userCredential.user;
 
-        // await setDoc(doc(db, "users", user.uid), {
-        //   email: user.email,
-        //   name: formData.name,
-        //   role: formData.role,
-        //   memberSince: Timestamp.fromDate(new Date()), // Asigna la fecha actual de registro
-        // });
-
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          email: formData.email,
           name: formData.name,
           role: formData.role,
           memberSince: Timestamp.fromDate(new Date()),
-          passwordLastChanged: null, // indica que nunca se ha cambiado
+          passwordLastChanged: null,
           requiresPasswordChange: true,
           passwordExpiresAt: Timestamp.fromDate(
             new Date(
@@ -201,18 +169,16 @@ const RegisterForm = ({
           ),
         });
 
-        // Crear el historial de contraseñas
-        await setDoc(doc(db, "passwordHistory", user.uid), {
+        await setDoc(doc(db, "passwordHistory", userCredential.user.uid), {
           passwords: [
             {
-              hash: formData.password, // Idealmente deberías hashear la contraseña
+              hash: formData.password,
               createdAt: Timestamp.fromDate(new Date()),
             },
           ],
         });
 
-        // Redirigir según el rol sin demora
-        handleRedirect(formData.role);
+        navigate(`/${formData.role}`, { replace: true });
       } catch (err) {
         if (err.code === "auth/popup-closed-by-user") {
           resetForm();
@@ -243,10 +209,10 @@ const RegisterForm = ({
         }
         setUiState((prev) => ({ ...prev, error: errorMessage }));
       } finally {
-        setUiState((prevState) => ({ ...prevState, loading: false }));
+        setUiState((prev) => ({ ...prev, loading: false }));
       }
     },
-    [formData, handleRedirect, emailValidation]
+    [formData, navigate, setUiState]
   );
 
   // Maneja el inicio de sesión
@@ -256,34 +222,18 @@ const RegisterForm = ({
       setUiState((prev) => ({ ...prev, loading: true }));
 
       try {
-        const canLogin = await checkLoginAttempts(formData.email);
-        if (!canLogin) {
-          const remainingTime = Math.ceil(
-            (lockExpiration - new Date().getTime()) / 1000 / 60
-          );
-          setUiState((prev) => ({ ...prev, loading: false }));
-          return;
-        }
-
         const userCredential = await signInWithEmailAndPassword(
           auth,
           formData.email,
           formData.password
         );
-        const user = userCredential.user;
 
-        // Obtener rol del usuario
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          handleRedirect(userData.role);
-        } else {
-          setUiState((prevState) => ({
-            ...prevState,
-            error: "Datos de Usuario no encontrados",
-          }));
+          const role = userDoc.data().role;
+          navigate(`/${role}`, { replace: true });
         }
-        await updateLoginAttempts(formData.email, true);
       } catch (err) {
         if (err.code === "auth/popup-closed-by-user") {
           resetForm();
@@ -318,9 +268,11 @@ const RegisterForm = ({
           loading: false,
         }));
         await updateLoginAttempts(formData.email, false);
+      } finally {
+        setUiState((prev) => ({ ...prev, loading: false }));
       }
     },
-    [setUiState, formData, handleRedirect, lockExpiration]
+    [formData, navigate, setUiState]
   );
 
   const checkLoginAttempts = async (email) => {

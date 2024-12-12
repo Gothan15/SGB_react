@@ -17,8 +17,29 @@ import PropTypes from "prop-types";
 const AddUserDialog = ({ onSuccess }) => {
   const handleAddUser = async (data) => {
     try {
+      console.log("Datos recibidos en handleAddUser:", data); // Para debugging
+
+      if (!data.name || !data.email || !data.password || !data.role) {
+        const missingFields = [];
+        if (!data.name) missingFields.push("nombre");
+        if (!data.email) missingFields.push("email");
+        if (!data.password) missingFields.push("contraseña");
+        if (!data.role) missingFields.push("rol");
+
+        throw new Error(
+          `Campos requeridos faltantes: ${missingFields.join(", ")}`
+        );
+      }
+
+      const cleanedData = {
+        name: data.name.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        role: data.role,
+      };
+
       const createUser = httpsCallable(functions, "createUser");
-      const result = await createUser(data);
+      const result = await createUser(cleanedData);
 
       if (result.data.success) {
         toast.success("Usuario agregado exitosamente");
@@ -28,17 +49,12 @@ const AddUserDialog = ({ onSuccess }) => {
           email: result.data.user.email,
           role: result.data.user.role,
         });
-
-        // Llamar a la función createCustomRoles para generar un log
-        const createCustomRoles = httpsCallable(functions, "createCustomRoles");
-        await createCustomRoles({ uid: result.data.user.id });
-        console.log("Función createCustomRoles llamada exitosamente");
       } else {
-        throw new Error(result.data.message || "Error al crear usuario");
+        //throw new Error(result.data.message || "Error al crear usuario");
       }
     } catch (error) {
-      console.error("Error al crear usuario:", error);
-      toast.error(error.message || "Error al crear usuario");
+      console.error("Error detallado:", error);
+      //toast.error(error.message || "Error al crear usuario");
     }
   };
 

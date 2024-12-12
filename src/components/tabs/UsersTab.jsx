@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useOutletContext } from "react-router-dom";
 import {
   Card,
@@ -13,21 +12,12 @@ import {
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
-  SearchIcon,
   Trash2Icon,
-  UserPlus,
 } from "lucide-react";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import AddUserDialog from "../dialogs/AddUserDialog";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
+
 import {
   Select,
   SelectContent,
@@ -63,8 +53,6 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { httpsCallable } from "firebase/functions";
-import { functions } from "@/firebaseConfig";
 
 const UsersTab = () => {
   const { data, setData } = useOutletContext();

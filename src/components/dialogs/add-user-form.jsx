@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,18 @@ import {
 } from "@/components/ui/select";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2, RefreshCw } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, Controller } from "react-hook-form";
+import * as z from "zod";
+import PropTypes from "prop-types";
+
+// Definir el esquema de validación
+const formSchema = z.object({
+  name: z.string().min(1, "El nombre es requerido"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  role: z.string().min(1, "El rol es requerido"),
+});
 
 const generateRandomPassword = (length = 12) => {
   const charset =
@@ -23,47 +34,52 @@ const generateRandomPassword = (length = 12) => {
   return password;
 };
 
-export default function AddUserForm({ onSave }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
-  const [password, setPassword] = useState(generateRandomPassword());
-  const [isLoading, setIsLoading] = useState(false);
+const AddUserForm = ({ onSave }) => {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: generateRandomPassword(),
+      role: "student",
+    },
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const handleSubmit = async (formData) => {
+    console.log("Datos del formulario:", formData); // Para debugging
+
+    const validatedData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role,
+    };
+
+    if (Object.values(validatedData).some((value) => !value)) {
+      console.error("Datos incompletos:", validatedData);
+      return;
+    }
 
     try {
-      await onSave({
-        name,
-        email,
-        role,
-        password,
+      await onSave(validatedData);
+      form.reset({
+        ...form.formState.defaultValues,
+        password: generateRandomPassword(),
       });
-
-      // Reset form
-      setName("");
-      setEmail("");
-      setRole("");
-      setPassword(generateRandomPassword());
     } catch (error) {
       console.error("Error en el formulario:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Nombre</Label>
           <Input
             id="name"
             placeholder="Nombre del usuario"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            {...form.register("name")}
             required
           />
         </div>
@@ -73,23 +89,33 @@ export default function AddUserForm({ onSave }) {
             id="email"
             type="email"
             placeholder="correo@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...form.register("email")}
             required
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="role">Rol</Label>
-          <Select value={role} onValueChange={setRole} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona un rol" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="student">Estudiante</SelectItem>
-              <SelectItem value="admin">Administrador</SelectItem>
-              <SelectItem value="atm">Bibliotecario</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            name="role"
+            control={form.control}
+            defaultValue="student"
+            render={({ field }) => (
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+                defaultValue="student"
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Estudiante</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="atm">Bibliotecario</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña generada</Label>
@@ -97,14 +123,16 @@ export default function AddUserForm({ onSave }) {
             <Input
               id="password"
               type="text"
-              value={password}
+              {...form.register("password")}
               readOnly
               className="flex-grow"
             />
             <Button
               type="button"
               variant="outline"
-              onClick={() => setPassword(generateRandomPassword())}
+              onClick={() =>
+                form.setValue("password", generateRandomPassword())
+              }
               className="flex-shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
@@ -117,8 +145,8 @@ export default function AddUserForm({ onSave }) {
         </div>
       </div>
       <DialogFooter>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? (
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Agregando usuario...
@@ -130,4 +158,9 @@ export default function AddUserForm({ onSave }) {
       </DialogFooter>
     </form>
   );
-}
+};
+AddUserForm.propTypes = {
+  onSave: PropTypes.func.isRequired,
+};
+
+export default AddUserForm;

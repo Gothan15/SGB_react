@@ -13,12 +13,14 @@ import { updatePassword } from "firebase/auth";
 import validatePassword from "../auth/validatePassword";
 import { toast } from "sonner";
 import PropTypes from "prop-types";
+import { Loader2 } from "lucide-react";
 
 const ForcePasswordChangeDialog = ({ isOpen, onClose }) => {
   {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+
     const [passwordValidation, setPasswordValidation] = useState({
       strength: 0,
       checks: {},
@@ -147,7 +149,14 @@ const ForcePasswordChangeDialog = ({ isOpen, onClose }) => {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
             <Button type="submit" disabled={isLoading}>
-              Cambiar contraseña
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cambiando contraseña...
+                </>
+              ) : (
+                "Cambiar contraseña"
+              )}
             </Button>
           </form>
         </DialogContent>
