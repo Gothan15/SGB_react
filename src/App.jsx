@@ -1,34 +1,36 @@
-//* eslint-disable no-unused-vars */
-import BibPage from "./components/Bibliotecario-dashboard";
-import AdminPage from "./components/Admin-dashboard";
-import Register from "./components/Register";
-import UserDashboard from "./components/User-dashboard";
-import Home from "./components/Home";
-import AvailableBooks from "./components/tabs/AvailableBooks";
-import BorrowedBooks from "./components/tabs/BorrowedBooks";
-import ReservationHistory from "./components/tabs/ReservationHistory";
-import AccountInfo from "./components/tabs/AccountInfo";
-import ReservationsTab from "./components/tabs/ReservationsTab";
-import UsersTab from "./components/tabs/UsersTab";
-import BooksTab from "./components/tabs/BooksTab";
-import ReportsTab from "./components/tabs/ReportsTab";
-import SupportTab from "./components/tabs/SupportTab";
-
-import {
-  BrowserRouter,
-  // as Router
-  Routes,
-  Route,
-} from "react-router-dom";
+// Importaciones de react , react-router-dom, firebase y sonner
+import { lazy } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState, memo } from "react";
-import PrivateRoute from "./components/PrivateRoute";
 import { auth, db } from "./firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
-import { LoadingScreen } from "./components/ui/LoadingScreen";
 import { Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { SidebarProvider } from "./components/ui/sidebar";
+import { LoadingScreen } from "./components/ui/LoadingScreen";
+import PrivateRoute from "./components/PrivateRoute";
+import SuspenseWrapper from "./components/ui/SuspenseWrapper";
+
+// Importaciones dinámicas
+const Home = lazy(() => import("./components/Home"));
+const Register = lazy(() => import("./components/Register"));
+const BibPage = lazy(() => import("./components/Bibliotecario-dashboard"));
+const AdminPage = lazy(() => import("./components/Admin-dashboard"));
+const UserDashboard = lazy(() => import("./components/User-dashboard"));
+
+// Importaciones dinámicas de tabs
+const AvailableBooks = lazy(() => import("./components/tabs/AvailableBooks"));
+const BorrowedBooks = lazy(() => import("./components/tabs/BorrowedBooks"));
+const ReservationHistory = lazy(() =>
+  import("./components/tabs/ReservationHistory")
+);
+const AccountInfo = lazy(() => import("./components/tabs/AccountInfo"));
+const ReservationsTab = lazy(() => import("./components/tabs/ReservationsTab"));
+const UsersTab = lazy(() => import("./components/tabs/UsersTab"));
+const BooksTab = lazy(() => import("./components/tabs/BooksTab"));
+const ReportsTab = lazy(() => import("./components/tabs/ReportsTab"));
+const SupportTab = lazy(() => import("./components/tabs/SupportTab"));
 
 function App() {
   const [userRole, setUserRole] = useState(null);
@@ -69,63 +71,154 @@ function App() {
       style={{ backgroundImage: "url('/img/bg.jpeg')" }}
     >
       <Toaster richColors closeButton position="bottom-right" />
-      {/* <Router> */}
       <SidebarProvider>
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/register" element={<Register />} />
+            <Route
+              path="/"
+              element={
+                <SuspenseWrapper>
+                  <Home />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <SuspenseWrapper>
+                  <Register />
+                </SuspenseWrapper>
+              }
+            />
             <Route
               path="/atm"
               element={
                 <PrivateRoute userRole={userRole} requiredRole="atm">
-                  <BibPage />
+                  <SuspenseWrapper>
+                    <BibPage />
+                  </SuspenseWrapper>
                 </PrivateRoute>
               }
             >
               <Route index element={<Navigate to="reservations" />} />
-              <Route path="reservations" element={<ReservationsTab />} />
-
-              <Route path="books" element={<BooksTab />} />
-              <Route path="account" element={<AccountInfo />} />
-
-              {/* tickets={data.supportTickets} */}
+              <Route
+                path="reservations"
+                element={
+                  <SuspenseWrapper>
+                    <ReservationsTab />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="books"
+                element={
+                  <SuspenseWrapper>
+                    <BooksTab />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="account"
+                element={
+                  <SuspenseWrapper>
+                    <AccountInfo />
+                  </SuspenseWrapper>
+                }
+              />
             </Route>
+
             <Route
               path="/admin"
               element={
                 <PrivateRoute userRole={userRole} requiredRole="admin">
-                  <AdminPage />
+                  <SuspenseWrapper>
+                    <AdminPage />
+                  </SuspenseWrapper>
                 </PrivateRoute>
               }
             >
               <Route index element={<Navigate to="users" />} />
-              {/* <Route path="reservations" element={<ReservationsTab />} /> */}
-              <Route path="users" element={<UsersTab />} />
-              {/* <Route path="books" element={<BooksTab />} /> */}
-              <Route path="reports" element={<ReportsTab />} />
-              <Route path="support" element={<SupportTab />} />
-              <Route path="account" element={<AccountInfo />} />
-              {/* tickets={data.supportTickets} */}
+              <Route
+                path="users"
+                element={
+                  <SuspenseWrapper>
+                    <UsersTab />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="reports"
+                element={
+                  <SuspenseWrapper>
+                    <ReportsTab />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="support"
+                element={
+                  <SuspenseWrapper>
+                    <SupportTab />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="account"
+                element={
+                  <SuspenseWrapper>
+                    <AccountInfo />
+                  </SuspenseWrapper>
+                }
+              />
             </Route>
+
             <Route
               path="/student"
               element={
                 <PrivateRoute userRole={userRole} requiredRole="student">
-                  <UserDashboard />
+                  <SuspenseWrapper>
+                    <UserDashboard />
+                  </SuspenseWrapper>
                 </PrivateRoute>
               }
             >
               <Route index element={<Navigate to="borrowed" />} />
-              <Route path="available" element={<AvailableBooks />} />
-              <Route path="borrowed" element={<BorrowedBooks />} />
-              <Route path="reservations" element={<ReservationHistory />} />
-              <Route path="account" element={<AccountInfo />} />
+              <Route
+                path="available"
+                element={
+                  <SuspenseWrapper>
+                    <AvailableBooks />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="borrowed"
+                element={
+                  <SuspenseWrapper>
+                    <BorrowedBooks />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="reservations"
+                element={
+                  <SuspenseWrapper>
+                    <ReservationHistory />
+                  </SuspenseWrapper>
+                }
+              />
+              <Route
+                path="account"
+                element={
+                  <SuspenseWrapper>
+                    <AccountInfo />
+                  </SuspenseWrapper>
+                }
+              />
             </Route>
           </Routes>
-          {/* </Router> */}
         </BrowserRouter>
       </SidebarProvider>
     </div>

@@ -1,5 +1,9 @@
 // React y Terceros
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "@/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 import LoadinSpinner from "./ui/LoadinSpinner";
 import QuoteSection from "./auth/QuoteSection";
 import RegisterForm from "./auth/RegisterForm";
@@ -14,6 +18,21 @@ const Register = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [lockExpiration, setLockExpiration] = useState(null);
   const [remainingTime, setRemainingTime] = useState(0);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          const role = userDoc.data().role;
+          navigate(`/${role}`);
+        }
+      }
+    });
+    return () => unsubscribeAuth();
+  }, [navigate]);
 
   return (
     <>

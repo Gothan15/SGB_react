@@ -9,7 +9,7 @@ admin.initializeApp({
 admin
   .auth()
   .createUser({
-    email: "user@example.com",
+    email: "user2@example.com",
     password: "password123",
     displayName: "John Doe",
   })
@@ -19,3 +19,5 @@ admin
   .catch((error) => {
     console.error("Error al crear usuario:", error);
   });
+
+//le falta q lo agregue tambien a la base de datos de firestore para poder loguearse

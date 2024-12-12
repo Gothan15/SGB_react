@@ -31,7 +31,9 @@ import {
   BASE_LOCK_DURATION,
   MAX_LOCK_MULTIPLIER,
   PASSWORD_CONFIG,
+  functions,
 } from "@/firebaseConfig";
+import { httpsCallable } from "firebase/functions";
 
 // Iconos
 import { RiArrowRightDoubleFill } from "react-icons/ri";
@@ -209,7 +211,7 @@ const RegisterForm = ({
           ],
         });
 
-        // Redirigir según el rol
+        // Redirigir según el rol sin demora
         handleRedirect(formData.role);
       } catch (err) {
         if (err.code === "auth/popup-closed-by-user") {
@@ -274,9 +276,7 @@ const RegisterForm = ({
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          setTimeout(() => {
-            handleRedirect(userData.role);
-          }, 30);
+          handleRedirect(userData.role);
         } else {
           setUiState((prevState) => ({
             ...prevState,
