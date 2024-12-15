@@ -32,12 +32,19 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect } from "react";
+import PropTypes from "prop-types";
 
 const ReservationsTab = () => {
   const {
     data,
     //handleApproveReservation, handleRejectReservation
   } = useOutletContext();
+
+  useEffect(() => {
+    console.log("Reservaciones pendientes:", data?.pendingReservations);
+  }, [data?.pendingReservations]);
 
   const handleApproveReservation = async (reservationId, bookId, userId) => {
     try {
@@ -87,6 +94,7 @@ const ReservationsTab = () => {
         dueDate: dueDate, // Usar la fecha de la reserva
         status: "Prestado",
         reservationId,
+        imageUrl: bookData.imageUrl || null,
         category: bookData.category || "No especificada",
         isbn: bookData.isbn || "No disponible",
         notes: "",
@@ -106,6 +114,7 @@ const ReservationsTab = () => {
         category: bookData.category || "No especificada",
         bookId: bookId,
         userId: userId,
+
         actionType: "Préstamo",
         notes: "",
         dueDate: dueDate, // Usar la fecha de la reserva
@@ -144,6 +153,33 @@ const ReservationsTab = () => {
           type: "reservation_approved",
         });
       });
+
+      // Buscar y eliminar de futuras lecturas si existe
+      const futureReadingsRef = collection(db, "futureReadings");
+      const futureReadingQuery = query(
+        futureReadingsRef,
+        where("userId", "==", userId),
+        where("bookId", "==", bookId)
+      );
+
+      const futureReadingSnapshot = await getDocs(futureReadingQuery);
+      if (!futureReadingSnapshot.empty) {
+        futureReadingSnapshot.docs.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+
+        // Añadir notificación sobre la eliminación de futuras lecturas
+        const notificationRef = doc(
+          collection(db, "users", userId, "notifications")
+        );
+        batch.set(notificationRef, {
+          title: "Libro eliminado de futuras lecturas",
+          message: `"${bookData.title}" ha sido eliminado de tu lista de futuras lecturas ya que tu reserva fue aprobada.`,
+          createdAt: timestamp,
+          read: false,
+          type: "info",
+        });
+      }
 
       await batch.commit();
       toast.success("Reserva aprobada exitosamente");
@@ -272,6 +308,30 @@ const ReservationsTab = () => {
     );
   }
 
+  // Reemplazar el componente BookCover con este nuevo componente
+  const BookCover = ({ imageUrl, title }) => {
+    console.log(
+      `Libro: ${title} - URL de imagen:`,
+      imageUrl || "No disponible"
+    );
+    return (
+      <Avatar className="w-12 h-12">
+        <AvatarImage
+          src={imageUrl || "/default-book-cover.png"}
+          alt={title}
+          className="object-cover"
+        />
+        <AvatarFallback className="text-xs">
+          {title?.charAt(0).toUpperCase() || "📚"}
+        </AvatarFallback>
+      </Avatar>
+    );
+  };
+  BookCover.propTypes = {
+    imageUrl: PropTypes.string,
+    title: PropTypes.string.isRequired,
+  };
+
   return (
     <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white mt-6">
       <CardHeader>
@@ -284,7 +344,7 @@ const ReservationsTab = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID Reserva</TableHead>
+              <TableHead className="w-[80px]">Portada</TableHead>
               <TableHead>Usuario</TableHead>
               <TableHead>Libro</TableHead>
               <TableHead>Fecha de Solicitud</TableHead>
@@ -297,7 +357,12 @@ const ReservationsTab = () => {
               .sort((a, b) => a.requestedAt?.toDate() - b.requestedAt?.toDate())
               .map((reservation, index) => (
                 <TableRow key={reservation.id}>
-                  <TableCell>{reservation.id}</TableCell>
+                  <TableCell className="flex justify-center">
+                    <BookCover
+                      imageUrl={reservation.imageUrl} // Cambiado de coverURL a imageUrl
+                      title={reservation.bookTitle}
+                    />
+                  </TableCell>
                   <TableCell>{reservation.userName}</TableCell>
                   <TableCell>{reservation.bookTitle}</TableCell>
                   <TableCell>
@@ -307,7 +372,7 @@ const ReservationsTab = () => {
                     <Badge>{reservation.status}</Badge>
                   </TableCell>
                   <TableCell>
-                    {reservation.status === "pendiente" && (
+                    {reservation.status === "Pendiente" && (
                       <div className="flex space-x-2">
                         {index === 0 ? (
                           // Botones habilitados para la primera solicitud

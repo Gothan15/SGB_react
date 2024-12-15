@@ -65,6 +65,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "../ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const BooksTab = () => {
   const { ui, setUi, data, setData } = useOutletContext();
@@ -216,9 +217,17 @@ const BooksTab = () => {
   // Definición de columnas para la tabla de libros
   const bookColumns = [
     {
-      accessorKey: "id",
-      header: "ID",
+      accessorKey: "imageUrl",
+      header: "Portada",
       enableSorting: false,
+      cell: ({ row }) => (
+        <Avatar className="w-12 h-12">
+          <AvatarImage src={row.original.imageUrl} alt={row.original.title} />
+          <AvatarFallback>
+            {row.original.title.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      ),
     },
     {
       accessorKey: "title",
@@ -347,7 +356,7 @@ const BooksTab = () => {
     initialState: {
       globalFilter: "",
       pagination: {
-        pageSize: 7,
+        pageSize: 6,
       },
     },
   });
@@ -468,7 +477,7 @@ const BooksTab = () => {
           Administra el catálogo de libros de la biblioteca.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-black overflow-y-auto max-h-[570px]">
         <div className="">
           <Dialog>
             <DialogTrigger className="absolute right-[65px]" asChild>

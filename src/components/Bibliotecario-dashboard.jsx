@@ -255,7 +255,7 @@ const BibPage = () => {
       // Actualizar la colección y los campos para que coincidan con user-dashboard.jsx
       const pendingReservationsQuery = query(
         collection(db, "reservations"), // Asegurarse de que la colección es "reservations"
-        where("status", "==", "pendiente")
+        where("status", "==", "Pendiente")
       );
 
       const unsubscribe = onSnapshot(
@@ -324,7 +324,7 @@ const BibPage = () => {
 
     const pendingReservationsQuery = query(
       collection(db, "reservations"),
-      where("status", "==", "pendiente")
+      where("status", "==", "Pendiente")
     );
     const unsubscribePendingReservations = onSnapshot(
       pendingReservationsQuery,

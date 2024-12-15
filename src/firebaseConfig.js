@@ -6,6 +6,7 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage, deleteObject, getDownloadURL } from "firebase/storage";
 import { ref } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -22,6 +23,10 @@ const firebaseConfig = {
   measurementId: "G-Y34NVNFHC8",
 };
 
+// Solo en desarrollo - Permite tokens de depuración
+// if (process.env.NODE_ENV === "development") {
+//   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+// }
 // En el archivo src/firebaseConfig.js
 export const PASSWORD_CONFIG = {
   MAX_AGE_DAYS: 90, // máximo 90 días
@@ -53,6 +58,16 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
+
+// Inicializa App Check después de inicializar Firebase
+console.log("Iniciando configuración de App Check...");
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider("6LcpypkqAAAAANjqYhsE6expeptIsK1JH6ucYEwE"),
+  isTokenAutoRefreshEnabled: true,
+});
+
+console.log("App Check configurado:", appCheck ? "Exitoso" : "Fallido");
+
 // Si estás en desarrollo, puedes usar el emulador:
 // if (process.env.NODE_ENV === 'development') {
 //   connectFunctionsEmulator(functions, 'localhost', 5001);
@@ -68,4 +83,5 @@ export {
   getStorage,
   ref,
   functions,
+  appCheck,
 };

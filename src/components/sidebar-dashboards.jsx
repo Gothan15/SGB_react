@@ -13,9 +13,19 @@ import { Bell, EllipsisVertical, Trash2 } from "lucide-react";
 import PropTypes from "prop-types";
 
 import { auth, db } from "@/firebaseConfig";
-import { collection, getDocs, writeBatch } from "firebase/firestore";
-import { useCallback } from "react";
+import {
+  collection,
+  getDocs,
+  writeBatch,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import { useCallback, useState, useEffect } from "react";
 import AvatarUser from "./ui/avatarUser";
+import { BookmarkIcon } from "lucide-react";
 
 import LogOutDialog from "./dialogs/LogOutDialog";
 import { motion } from "framer-motion"; // Importar framer-motion para animaciones
@@ -52,6 +62,51 @@ const Sidebar = ({
       console.error("Error al limpiar notificaciones:", error);
     }
   }, [setNotifications]);
+
+  const [futureReadings, setFutureReadings] = useState([]);
+  const [userRole, setUserRole] = useState(null);
+
+  // Añadir efecto para obtener el rol del usuario
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const getUserRole = async () => {
+      try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserRole(userSnap.data().role);
+        }
+      } catch (error) {
+        console.error("Error al obtener el rol del usuario:", error);
+      }
+    };
+
+    getUserRole();
+  }, []);
+
+  // Modificar el efecto de futuras lecturas para que dependa del rol
+  useEffect(() => {
+    if (!auth.currentUser || userRole !== "student") return;
+
+    const futureReadingsRef = collection(db, "futureReadings");
+    const q = query(
+      futureReadingsRef,
+      where("userId", "==", auth.currentUser.uid)
+    );
+
+    // Usar onSnapshot para escuchar cambios en tiempo real
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const readings = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setFutureReadings(readings);
+    });
+
+    // Cleanup listener
+    return () => unsubscribe();
+  }, [userRole]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -118,6 +173,30 @@ const Sidebar = ({
                 )}
               </ScrollArea>
             </div>
+            {userRole === "student" && (
+              <div>
+                <h3 className="mb-2 font-semibold flex items-center">
+                  <BookmarkIcon className="mr-2 h-4 w-4" />
+                  Futuras Lecturas
+                </h3>
+                <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+                  {futureReadings.length > 0 ? (
+                    futureReadings.map((reading) => (
+                      <div key={reading.id} className="mb-4 last:mb-0">
+                        <h4 className="font-medium">{reading.bookTitle}</h4>
+                        <p className="text-sm text-gray-500">
+                          {reading.bookAuthor}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      No tienes libros en futuras lecturas
+                    </p>
+                  )}
+                </ScrollArea>
+              </div>
+            )}
           </div>
         </div>
 
@@ -153,6 +232,7 @@ Sidebar.propTypes = {
   userProfile: PropTypes.shape({
     name: PropTypes.string,
     photoURL: PropTypes.string,
+    role: PropTypes.string, // Añadir validación para el rol
   }),
   userInfo: PropTypes.shape({
     displayName: PropTypes.string,

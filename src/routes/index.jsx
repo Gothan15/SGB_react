@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-unused-vars */
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
@@ -40,7 +42,21 @@ export const routes = {
 };
 
 export const defaultRoutes = {
-  admin: "users",
-  atm: "reservations",
-  student: "borrowed",
+  admin: "/admin/users",
+  atm: "/atm/reservations",
+  student: "/student/borrowed",
+};
+
+// También podemos agregar una utilidad para obtener la ruta base según el rol
+export const getBasePath = (role) => {
+  switch (role) {
+    case "admin":
+      return "/admin";
+    case "atm":
+      return "/atm";
+    case "student":
+      return "/student";
+    default:
+      return "/";
+  }
 };

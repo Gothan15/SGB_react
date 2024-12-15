@@ -12,6 +12,7 @@ import { LoadingScreen } from "./components/ui/LoadingScreen";
 import PrivateRoute from "./components/PrivateRoute";
 import { routes, defaultRoutes } from "./routes";
 import PageLoader from "./components/ui/PageLoader";
+import PasswordResetForm from "./components/auth/PasswordResetForm";
 
 // Importaciones dinámicas
 const Home = lazy(() => import("./components/Home"));
@@ -66,45 +67,79 @@ function App() {
     >
       <Toaster richColors closeButton position="bottom-right" />
       <SidebarProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+        >
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Rutas públicas */}
               <Route path="/" element={<Home />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<PasswordResetForm />} />
 
               {/* Rutas protegidas */}
-              {Object.entries(routes).map(([role, tabs]) => (
+              <Route
+                path="/admin"
+                element={
+                  <PrivateRoute userRole={userRole} requiredRole="admin">
+                    <AdminPage />
+                  </PrivateRoute>
+                }
+              >
                 <Route
-                  key={role}
-                  path={`/${role}/*`}
-                  element={
-                    <PrivateRoute userRole={userRole} requiredRole={role}>
-                      <Suspense fallback={<PageLoader />}>
-                        {role === "admin" && <AdminPage />}
-                        {role === "atm" && <BibPage />}
-                        {role === "student" && <UserDashboard />}
-                      </Suspense>
-                    </PrivateRoute>
-                  }
-                >
+                  index
+                  element={<Navigate to={defaultRoutes.admin} replace />}
+                />
+                {Object.entries(routes.admin).map(([name, Component]) => (
                   <Route
-                    index
-                    element={<Navigate to={defaultRoutes[role]} replace />}
+                    key={name}
+                    path={name.toLowerCase()}
+                    element={<Component />}
                   />
-                  {Object.entries(tabs).map(([name, Component]) => (
-                    <Route
-                      key={name}
-                      path={name.toLowerCase()}
-                      element={
-                        <Suspense fallback={<PageLoader />}>
-                          <Component />
-                        </Suspense>
-                      }
-                    />
-                  ))}
-                </Route>
-              ))}
+                ))}
+              </Route>
+
+              <Route
+                path="/atm"
+                element={
+                  <PrivateRoute userRole={userRole} requiredRole="atm">
+                    <BibPage />
+                  </PrivateRoute>
+                }
+              >
+                <Route
+                  index
+                  element={<Navigate to={defaultRoutes.atm} replace />}
+                />
+                {Object.entries(routes.atm).map(([name, Component]) => (
+                  <Route
+                    key={name}
+                    path={name.toLowerCase()}
+                    element={<Component />}
+                  />
+                ))}
+              </Route>
+
+              <Route
+                path="/student"
+                element={
+                  <PrivateRoute userRole={userRole} requiredRole="student">
+                    <UserDashboard />
+                  </PrivateRoute>
+                }
+              >
+                <Route
+                  index
+                  element={<Navigate to={defaultRoutes.student} replace />}
+                />
+                {Object.entries(routes.student).map(([name, Component]) => (
+                  <Route
+                    key={name}
+                    path={name.toLowerCase()}
+                    element={<Component />}
+                  />
+                ))}
+              </Route>
             </Routes>
           </Suspense>
         </BrowserRouter>

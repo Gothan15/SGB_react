@@ -60,7 +60,7 @@ import WelcomeUser from "./ui/welcome-user";
 import LoadinSpinner from "./ui/LoadinSpinner";
 import Sidebar from "./sidebar-dashboards";
 import Bubble from "./ui/Bubble";
-import VerificarAdmin from "./VerificarAdmin";
+
 import ReauthDialog from "./ui/ReauthDialog";
 
 const AdminPage = () => {
@@ -254,7 +254,7 @@ const AdminPage = () => {
       // Actualizar la colección y los campos para que coincidan con user-dashboard.jsx
       const pendingReservationsQuery = query(
         collection(db, "reservations"), // Asegurarse de que la colección es "reservations"
-        where("status", "==", "pendiente")
+        where("status", "==", "Pendiente")
       );
 
       const unsubscribe = onSnapshot(
@@ -323,7 +323,7 @@ const AdminPage = () => {
 
     const pendingReservationsQuery = query(
       collection(db, "reservations"),
-      where("status", "==", "pendiente")
+      where("status", "==", "Pendiente")
     );
     const unsubscribePendingReservations = onSnapshot(
       pendingReservationsQuery,
@@ -487,7 +487,6 @@ const AdminPage = () => {
         />
       )}
       <div className="md:w-[1920px] min-h-screen md:mx-auto p-6 bg-black bg-opacity-30 backdrop-blur-sm">
-        <VerificarAdmin />
         <div className="flex justify-between items-center mb-6">
           <div className="rounded-md shadow-md shadow-black">
             <PanelHeader

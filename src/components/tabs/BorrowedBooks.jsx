@@ -40,11 +40,13 @@ import {
   increment,
   addDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/firebaseConfig";
 import { toast } from "sonner";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import { Badge } from "../ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function BorrowedBooks() {
   const [borrowedBooks, setBorrowedBooks] = useState([]);
@@ -82,7 +84,7 @@ function BorrowedBooks() {
         const reservationsQuery = query(
           reservationsRef,
           where("userId", "==", auth.currentUser.uid),
-          where("status", "==", "pendiente")
+          where("status", "==", "Pendiente")
         );
         const reservationsSnap = await getDocs(reservationsQuery);
         const pendingReservationsData = reservationsSnap.docs.map((doc) => ({
@@ -132,14 +134,33 @@ function BorrowedBooks() {
         "borrowedBooks",
         bookId
       );
+
+      // Obtener el documento actual para verificar renewalCount
+      const bookDoc = await getDoc(borrowedBookRef);
+      const bookData = bookDoc.data();
+
+      if (bookData.renewalCount && bookData.renewalCount >= 1) {
+        toast.error(
+          "Ya has renovado este libro el máximo de veces permitido (1)"
+        );
+        return;
+      }
+
       await updateDoc(borrowedBookRef, {
         dueDate: newDueDate,
+        renewalCount: (bookData.renewalCount || 0) + 1,
       });
 
       // Actualizar el estado local
       setBorrowedBooks((prevBooks) =>
         prevBooks.map((book) =>
-          book.id === bookId ? { ...book, dueDate: newDueDate } : book
+          book.id === bookId
+            ? {
+                ...book,
+                dueDate: newDueDate,
+                renewalCount: (book.renewalCount || 0) + 1,
+              }
+            : book
         )
       );
 
@@ -290,15 +311,25 @@ function BorrowedBooks() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[60px]">Libro</TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Fecha de Solicitud</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className=" overflow-y-auto max-h-[200px]">
                     {pendingReservations.map((reservation) => (
                       <TableRow key={reservation.id}>
+                        <TableCell>
+                          <Avatar>
+                            <AvatarImage
+                              src={reservation.imageUrl}
+                              alt={reservation.bookTitle}
+                            />
+                            <AvatarFallback>📚</AvatarFallback>
+                          </Avatar>
+                        </TableCell>
                         <TableCell>{reservation.bookTitle}</TableCell>
                         <TableCell>
                           <Badge>{reservation.status}</Badge>
@@ -331,7 +362,7 @@ function BorrowedBooks() {
                                   <Button variant="outline">No</Button>
                                 </DialogTrigger>
                                 <Button
-                                  variant="destructive"
+                                  className="hover:bg-gradient-to-l hover:border-black hover:font-semibold from-red-700 transition-colors duration-200 to-black w-full"
                                   onClick={() =>
                                     handleCancelReservation(
                                       reservation.id,
@@ -360,15 +391,22 @@ function BorrowedBooks() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[60px]">Libro</TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Autor</TableHead>
                       <TableHead>Fecha de Devolución</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <TableBody className="overflow-y-auto max-h-[570px]">
                     {borrowedBooks.map((book) => (
                       <TableRow key={book.id}>
+                        <TableCell>
+                          <Avatar>
+                            <AvatarImage src={book.imageUrl} alt={book.title} />
+                            <AvatarFallback>📚</AvatarFallback>
+                          </Avatar>
+                        </TableCell>
                         <TableCell>{book.title}</TableCell>
                         <TableCell>{book.author}</TableCell>
                         <TableCell>

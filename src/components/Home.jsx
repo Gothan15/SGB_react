@@ -18,6 +18,7 @@ import {
   ArrowRightCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -44,6 +45,9 @@ const Home = () => {
                   />
                 </Button>
               </li>
+              {/* <li>
+                <ThemeToggle />
+              </li> */}
             </ul>
           </nav>
         </div>
@@ -122,7 +126,7 @@ const Home = () => {
         </section>
       </main>
 
-      <footer className="bg-gray-100 py-6 absolute w-[1879px] bottom-0">
+      <footer className="bg-gray-100 py-6 absolute w-full bottom-0">
         <div className="container mx-auto px-4 text-center text-gray-600">
           <p>
             &copy; 2024 Sistema de Gestión de Biblioteca. Todos los derechos

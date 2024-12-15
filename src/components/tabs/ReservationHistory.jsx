@@ -250,7 +250,7 @@ export default function ReservationHistory() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-y-auto max-h-[570px]">
         {reservations.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="rounded-full bg-background/10 p-3">

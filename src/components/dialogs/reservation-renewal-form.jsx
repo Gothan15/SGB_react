@@ -2,10 +2,21 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import PropTypes from "prop-types";
 import { Timestamp } from "firebase/firestore";
+import { toast } from "sonner";
 
 export default function ReservationRenewalForm({ book, onRenew, onClose }) {
+  // Determinar si el libro ya fue renovado
+  const hasBeenRenewed = book.renewalCount && book.renewalCount >= 1;
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (hasBeenRenewed) {
+      toast.error(
+        "Este libro ya ha sido renovado el máximo de veces permitido"
+      );
+      return;
+    }
 
     const currentDate = book.dueDate.toDate();
     const newDate = new Date(currentDate);
@@ -43,9 +54,16 @@ export default function ReservationRenewalForm({ book, onRenew, onClose }) {
           <strong>Fecha actual de devolución:</strong>{" "}
           {formatDate(book.dueDate)}
         </p>
+        {hasBeenRenewed && (
+          <p className="text-red-500">
+            Este libro ya ha sido renovado y no puede renovarse nuevamente.
+          </p>
+        )}
       </div>
       <DialogFooter>
-        <Button type="submit">Confirmar Renovación</Button>
+        <Button type="submit" disabled={hasBeenRenewed}>
+          Confirmar Renovación
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -57,6 +75,7 @@ ReservationRenewalForm.propTypes = {
     title: PropTypes.string.isRequired,
     author: PropTypes.string.isRequired,
     dueDate: PropTypes.object.isRequired, // Cambiado de string a object para Timestamp
+    renewalCount: PropTypes.number, // Añadir esta prop
   }).isRequired,
   onRenew: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,

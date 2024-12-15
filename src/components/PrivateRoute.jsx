@@ -9,22 +9,35 @@ const PrivateRoute = ({ userRole, requiredRole, children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("🔄 Iniciando verificación de ruta privada...");
+    console.log(`👤 Rol de usuario actual: ${userRole}`);
+    console.log(`🎯 Rol requerido: ${requiredRole}`);
+
     const timer = setTimeout(() => {
+      console.log("⏱️ Temporizador de verificación completado");
       setIsVerifying(false);
 
       if (!auth.currentUser) {
+        console.log("❌ Usuario no autenticado, redirigiendo a registro");
         navigate("/register", { replace: true });
+      } else {
+        console.log("✅ Usuario autenticado:", auth.currentUser.email);
       }
     }, 100);
 
-    return () => clearTimeout(timer);
-  }, [userRole, navigate]);
+    return () => {
+      console.log("🧹 Limpiando temporizador");
+      clearTimeout(timer);
+    };
+  }, [userRole, navigate, requiredRole]);
 
   if (isVerifying) {
+    console.log("⌛ Mostrando pantalla de carga...");
     return <LoadingScreen />;
   }
 
   if (!auth.currentUser) {
+    console.log("🚫 Acceso denegado - Redirigiendo a registro");
     return <Navigate to="/register" replace />;
   }
 

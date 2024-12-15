@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import {
   Card,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import AddUserDialog from "../dialogs/AddUserDialog";
+import DeleteUserDialog from "../dialogs/DeleteUserDialog";
 import { toast } from "sonner";
 
 import {
@@ -53,9 +55,16 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/firebaseConfig"; // Asegúrate de exportar functions desde firebaseConfig
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const UsersTab = () => {
   const { data, setData } = useOutletContext();
+  const [deleteDialogState, setDeleteDialogState] = useState({
+    isOpen: false,
+    userData: null,
+  });
 
   const handleAddUserSuccess = (newUser) => {
     setData((prev) => ({
@@ -65,47 +74,29 @@ const UsersTab = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    const confirmPrompt = prompt(
-      'Para eliminar el usuario, inserte la palabra "eliminar"'
-    );
-    if (confirmPrompt && confirmPrompt.toLowerCase() === "eliminar") {
-      try {
-        const batch = writeBatch(db);
-        const userDocRef = doc(db, "users", userId);
-        const userDoc = await getDoc(userDocRef);
-        const userData = userDoc.data();
+    const userToDelete = data.users.find((user) => user.id === userId);
+    setDeleteDialogState({
+      isOpen: true,
+      userData: userToDelete,
+    });
+  };
 
-        // Eliminar usuario
-        batch.delete(userDocRef);
+  const handleConfirmDelete = async () => {
+    const userId = deleteDialogState.userData.id;
+    try {
+      const deleteUserFunction = httpsCallable(functions, "deleteUser");
+      await deleteUserFunction({ userId });
 
-        // Crear notificación para administradores
-        const adminsSnapshot = await getDocs(
-          query(collection(db, "users"), where("role", "==", "admin"))
-        );
-        const timestamp = Timestamp.fromDate(new Date());
+      setData((prev) => ({
+        ...prev,
+        users: prev.users.filter((user) => user.id !== userId),
+      }));
 
-        adminsSnapshot.docs.forEach((adminDoc) => {
-          const notificationRef = doc(
-            collection(db, "users", adminDoc.id, "notifications")
-          );
-          batch.set(notificationRef, {
-            title: "Usuario Eliminado",
-            message: `Usuario ${userData.name} (${userData.email}) ha sido eliminado del sistema.`,
-            type: "error",
-            createdAt: timestamp,
-            read: false,
-          });
-        });
-
-        await batch.commit();
-        setData((prev) => ({
-          ...prev,
-          users: prev.users.filter((user) => user.id !== userId),
-        }));
-      } catch (error) {
-        console.error("Error al eliminar el usuario:", error);
-        toast.error("Error al eliminar el usuario");
-      }
+      toast.success("Usuario eliminado con éxito");
+      setDeleteDialogState({ isOpen: false, userData: null });
+    } catch (error) {
+      console.error("Error al eliminar el usuario:", error);
+      toast.error("Error al eliminar el usuario");
     }
   };
 
@@ -196,11 +187,19 @@ const UsersTab = () => {
 
   // Definición de columnas para la tabla de usuarios
   const userColumns = [
-    // {
-    //   accessorKey: "id",
-    //   header: "ID",
-    //   enableSorting: false,
-    // },
+    {
+      accessorKey: "photoURL",
+      header: "Avatar",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Avatar>
+          <AvatarImage src={row.original.photoURL} alt={row.original.name} />
+          <AvatarFallback>
+            {row.original.name.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      ),
+    },
     {
       accessorKey: "name",
       header: "Nombre",
@@ -265,7 +264,7 @@ const UsersTab = () => {
     initialState: {
       globalFilter: "",
       pagination: {
-        pageSize: 8,
+        pageSize: 10,
       },
     },
   });
@@ -372,7 +371,15 @@ const UsersTab = () => {
         </CardDescription>
       </CardHeader>
       <AddUserDialog onSuccess={handleAddUserSuccess} />
-      <CardContent>{renderTable(usersTable, "users")}</CardContent>
+      <DeleteUserDialog
+        isOpen={deleteDialogState.isOpen}
+        onClose={() => setDeleteDialogState({ isOpen: false, userData: null })}
+        onConfirm={handleConfirmDelete}
+        userData={deleteDialogState.userData}
+      />
+      <CardContent className="overflow-y-auto max-h-[570px]">
+        {renderTable(usersTable, "users")}
+      </CardContent>
     </Card>
   );
 };

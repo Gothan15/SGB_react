@@ -59,3 +59,26 @@ exports.createUser = onCall(async ({ data }) => {
     //throw new Error(error.message);
   }
 });
+
+exports.deleteUser = onCall(async ({ data }) => {
+  try {
+    // Validar que se reciba el ID del usuario
+    if (!data.userId) {
+      throw new Error("Se requiere el ID del usuario");
+    }
+
+    // Eliminar usuario de Authentication
+    await admin.auth().deleteUser(data.userId);
+
+    // Eliminar documento de Firestore
+    await admin.firestore().collection("users").doc(data.userId).delete();
+
+    return {
+      success: true,
+      message: `Usuario ${data.userId} eliminado exitosamente`,
+    };
+  } catch (error) {
+    console.error("Error en deleteUser:", error);
+    throw new Error(error.message);
+  }
+});

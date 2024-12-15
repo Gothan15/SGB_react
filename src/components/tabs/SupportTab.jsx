@@ -164,7 +164,7 @@ const SupportTab = () => {
           usuarios.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto overflow-y-auto max-h-[570px]">
         {tickets.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <MessageSquare className="h-16 w-16 text-gray-400 mb-4" />

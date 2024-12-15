@@ -36,7 +36,7 @@ const Register = () => {
 
   return (
     <>
-      <div className="text-white">
+      <div className="text-white register-component">
         <div className="flex min-h-screen">
           <div className="flex w-1/2 items-end p-12">
             <div className="space-y-4">

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 // React y Hooks
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
@@ -95,6 +95,8 @@ const RegisterForm = ({
 
   const navigate = useNavigate();
 
+  const captchaRef = useRef(null);
+
   // Redirige según el rol del usuario
   const handleRedirect = useCallback(
     (role) => {
@@ -149,6 +151,19 @@ const RegisterForm = ({
       setUiState((prev) => ({ ...prev, loading: true }));
 
       try {
+        console.log("Obteniendo token reCAPTCHA para registro...");
+        const token = await window.grecaptcha.execute(
+          "6LcpypkqAAAAANjqYhsE6expeptIsK1JH6ucYEwE",
+          { action: "register" }
+        );
+        console.log("Estado del token:", token ? "Presente" : "Ausente");
+
+        if (!token) {
+          console.warn("Intento de registro sin token reCAPTCHA");
+          toast.error("Por favor verifica que no eres un robot");
+          return;
+        }
+
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           formData.email,
@@ -222,6 +237,19 @@ const RegisterForm = ({
       setUiState((prev) => ({ ...prev, loading: true }));
 
       try {
+        console.log("Obteniendo token reCAPTCHA para login...");
+        const token = await window.grecaptcha.execute(
+          "6LcpypkqAAAAANjqYhsE6expeptIsK1JH6ucYEwE",
+          { action: "login" }
+        );
+        console.log("Estado del token:", token ? "Presente" : "Ausente");
+
+        if (!token) {
+          console.warn("Intento de login sin token reCAPTCHA");
+          toast.error("Por favor verifica que no eres un robot");
+          return;
+        }
+
         const userCredential = await signInWithEmailAndPassword(
           auth,
           formData.email,
@@ -465,6 +493,48 @@ const RegisterForm = ({
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Iniciando verificación de reCAPTCHA...");
+
+    try {
+      console.log("Ejecutando reCAPTCHA v3...");
+      const token = await window.grecaptcha.execute(
+        "6LcpypkqAAAAANjqYhsE6expeptIsK1JH6ucYEwE",
+        { action: "submit" }
+      );
+
+      console.log("Token reCAPTCHA generado:", token ? "Válido" : "Inválido");
+      console.log("Longitud del token:", token?.length);
+
+      if (!token) {
+        console.error("Error: Token reCAPTCHA no generado");
+        toast.error("Error de verificación reCAPTCHA");
+        return;
+      }
+
+      console.log(
+        "Verificación reCAPTCHA exitosa, procediendo con el formulario..."
+      );
+
+      if (uiState.newUser) {
+        console.log("Iniciando proceso de registro...");
+        await handleRegister(e);
+      } else {
+        console.log("Iniciando proceso de login...");
+        await handleLogin(e);
+      }
+    } catch (error) {
+      console.error("Error en la verificación reCAPTCHA:", error);
+      console.error("Detalles del error:", {
+        mensaje: error.message,
+        nombre: error.name,
+        stack: error.stack,
+      });
+      toast.error("Error en la verificación de seguridad");
+    }
+  };
+
   return (
     <div className="w-full max-w-md space-y-8 px-4">
       <div className="space-y-2 text-center">
@@ -474,10 +544,7 @@ const RegisterForm = ({
         </p>
       </div>
 
-      <form
-        onSubmit={uiState.newUser ? handleRegister : handleLogin}
-        className="grid gap-3 space-y-4"
-      >
+      <form onSubmit={handleSubmit} className="grid gap-3 space-y-4">
         {uiState.newUser && (
           <div className="relative text-2xl focus:outline-none focus:ring-0">
             <Input
@@ -634,6 +701,7 @@ const RegisterForm = ({
             </div>
           </div>
         )}
+
         {uiState.newUser ? (
           <Button
             type="submit"
@@ -699,6 +767,16 @@ const RegisterForm = ({
             )}
           </div>
         </div>
+        {!uiState.newUser && (
+          <div className="text-center mt-4  ">
+            <span
+              onClick={() => navigate("/reset-password")}
+              className="text-yellow-500 hover:underline rounded-md border-0 border-b-2 border-white text-center font-bold cursor-pointer"
+            >
+              ¿Olvidaste tu contraseña?
+            </span>
+          </div>
+        )}
       </form>
 
       {uiState.error && (
