@@ -37,14 +37,14 @@ const Register = () => {
   return (
     <>
       <div className="text-white register-component">
-        <div className="flex min-h-screen">
-          <div className="flex w-1/2 items-end p-12">
+        <div className="flex min-h-screen flex-col md:flex-row">
+          <div className="flex w-full md:w-1/2 items-end p-6 md:p-12">
             <div className="space-y-4">
               <QuoteSection />
             </div>
           </div>
 
-          <div className="flex rounded-md bg-opacity-50 p-8 shadow-black shadow-lg backdrop:blur-sm bg-[#000000] w-1/2 items-center justify-center">
+          <div className="flex rounded-md bg-opacity-50 p-4 md:p-8 shadow-black shadow-lg backdrop:blur-sm bg-[#000000] w-full md:w-1/2 items-center justify-center">
             {uiState.loading ? (
               <LoadinSpinner />
             ) : (

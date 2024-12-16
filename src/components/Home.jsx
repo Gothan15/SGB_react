@@ -23,15 +23,15 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 const Home = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen w-[1920px]  bg-opacity-30 bg-black ">
+    <div className="min-h-screen w-full sm:w-[100%] md:w-[1920px] bg-opacity-30 bg-black ">
       <header className="bg-white shadow-md shadow-black bg-opacity-90">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <h1 className="text-6xl font-bold text-black font-serif flex items-center">
+        <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-black font-serif flex items-center">
             <BookOpen className="mr-2" />
             Sistema de Gestión de Biblioteca
           </h1>
           <nav>
-            <ul className="flex space-x-4">
+            <ul className="flex space-x-2 sm:space-x-4">
               <li>
                 <Button
                   onClick={() => navigate("/register")}
@@ -54,17 +54,17 @@ const Home = () => {
       </header>
 
       <main className="container mx-auto px-4 py-12">
-        <section className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">
+        <section className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
             Bienvenido a tu Biblioteca Digital
           </h2>
-          <p className="backdrop:blur-sm bg-[#fffff] bg-opacity-30 rounded-lg indent-8 text-[#f5f5f5] font-serif text-3xl font-medium leading-tight">
+          <p className="backdrop:blur-sm bg-[#fffff] bg-opacity-70 rounded-lg indent-4 sm:indent-6 text-[#f5f5f5] font-serif text-xl sm:text-2xl md:text-3xl font-medium leading-tight">
             Descubre un mundo de conocimiento al alcance de tus manos. Gestiona
             tus préstamos, reservas y más con nuestro sistema intuitivo.
           </p>
         </section>
 
-        <section className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -111,9 +111,11 @@ const Home = () => {
           </Card>
         </section>
 
-        <section className="text-center mb-12">
-          <h3 className="text-2xl font-bold mb-4">¿Listo para empezar?</h3>
-          <div className="flex justify-center space-x-4">
+        <section className="text-center mb-8 sm:mb-12">
+          <h3 className="text-xl sm:text-2xl font-bold mb-4">
+            ¿Listo para empezar?
+          </h3>
+          <div className="flex justify-center space-x-2 sm:space-x-4">
             <Button
               size="lg"
               className="flex items-center hover:bg-white hover:bg-opacity-100 hover:text-black hover:shadow-md hover:shadow-black hover:border-2 hover:border-black transition-colors duration-300"
@@ -126,7 +128,7 @@ const Home = () => {
         </section>
       </main>
 
-      <footer className="bg-gray-100 py-6 absolute w-full bottom-0">
+      <footer className="bg-gray-100 py-4 sm:py-6 absolute w-full bottom-0">
         <div className="container mx-auto px-4 text-center text-gray-600">
           <p>
             &copy; 2024 Sistema de Gestión de Biblioteca. Todos los derechos

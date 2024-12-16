@@ -258,13 +258,13 @@ function AvailableBooks() {
               {availableBooks.map((book) => (
                 <Card
                   key={book.id}
-                  className="shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
+                  className="shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer md:p-4 p-2"
                 >
                   <CardHeader className=" p-0">
                     <img
                       src={book.imageUrl}
                       alt={book.title}
-                      className="w-full h-48 object-cover rounded-lg  "
+                      className="w-full h-48 object-cover rounded-lg md:h-64"
                       onClick={() => {
                         setSelectedBook(book);
                         setOpen(true);

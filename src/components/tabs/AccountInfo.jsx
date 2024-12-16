@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import { auth, db } from "@/firebaseConfig";
-import {
-  doc,
-  onSnapshot,
-  addDoc,
-  collection,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import {
   Card,
   CardContent,
@@ -16,19 +10,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import ProfileEditForm from "../dialogs/profile-edit-form";
-import { toast } from "sonner";
-import ChangePasswordDialog from "../dialogs/ChangePasswordDialog";
-import SendEmailVerificationDialog from "../dialogs/SendEmailVerificationDialog";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+//   DialogDescription,
+// } from "@/components/ui/dialog";
+// import { Button } from "@/components/ui/button";
+// import ProfileEditForm from "../dialogs/profile-edit-form";
+//import { toast } from "sonner";
+// import ChangePasswordDialog from "../dialogs/ChangePasswordDialog";
+// import SendEmailVerificationDialog from "../dialogs/SendEmailVerificationDialog";
 
 const formatPhoneNumber = (phone, region = "ES") => {
   if (!phone) return "No especificado";
@@ -60,9 +54,9 @@ function AccountInfo() {
   const [userInfo, setUserInfo] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showSendVerification, setShowSendVerification] = useState(false);
+  // const [showEditProfile, setShowEditProfile] = useState(false);
+  // const [showChangePassword, setShowChangePassword] = useState(false);
+  // const [showSendVerification, setShowSendVerification] = useState(false);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -95,39 +89,39 @@ function AccountInfo() {
     fetchUserInfo();
   }, []);
 
-  const saveNotification = async (title, message, type) => {
-    try {
-      const notificationsRef = collection(
-        db,
-        "users",
-        auth.currentUser.uid,
-        "notifications"
-      );
-      await addDoc(notificationsRef, {
-        title,
-        message,
-        type,
-        read: false,
-        createdAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error("Error al guardar la notificación:", error);
-    }
-  };
+  // const saveNotification = async (title, message, type) => {
+  //   try {
+  //     const notificationsRef = collection(
+  //       db,
+  //       "users",
+  //       auth.currentUser.uid,
+  //       "notifications"
+  //     );
+  //     await addDoc(notificationsRef, {
+  //       title,
+  //       message,
+  //       type,
+  //       read: false,
+  //       createdAt: serverTimestamp(),
+  //     });
+  //   } catch (error) {
+  //     console.error("Error al guardar la notificación:", error);
+  //   }
+  // };
 
-  const handleSuccess = async (message) => {
-    console.log(message);
-    toast.success(message);
+  // const handleSuccess = async (message) => {
+  //   console.log(message);
+  //   toast.success(message);
 
-    // Guardar la notificación cuando se actualiza el perfil
-    await saveNotification(
-      "Perfil Actualizado",
-      "Tu información de perfil ha sido actualizada correctamente",
-      "success"
-    );
+  //   // Guardar la notificación cuando se actualiza el perfil
+  //   await saveNotification(
+  //     "Perfil Actualizado",
+  //     "Tu información de perfil ha sido actualizada correctamente",
+  //     "success"
+  //   );
 
-    // Ya no es necesario manejar la actualización del historial aquí
-  };
+  //   // Ya no es necesario manejar la actualización del historial aquí
+  // };
 
   if (loading || !userInfo) {
     return (
@@ -140,15 +134,19 @@ function AccountInfo() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white w-full max-w-full md:p-6 p-4">
       <CardHeader>
-        <CardTitle>Información de la Cuenta</CardTitle>
-        <CardDescription>Tus detalles de usuario.</CardDescription>
+        <CardTitle className="text-lg sm:text-xl">
+          Información de la Cuenta
+        </CardTitle>
+        <CardDescription className="text-sm sm:text-base">
+          Tus detalles de usuario.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Avatar>
+          <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
+            <Avatar className="w-16 h-16 md:w-24 md:h-24">
               <AvatarImage
                 src={userProfile?.photoURL || userInfo?.photoURL}
                 alt="Avatar"
@@ -158,21 +156,21 @@ function AccountInfo() {
                   userInfo?.displayName?.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            <div className="space-y-2">
-              <p>
+            <div className="space-y-2 text-center md:text-left">
+              <p className="text-sm sm:text-base">
                 <strong>Nombre:</strong>{" "}
                 {userProfile?.name ||
                   userInfo?.displayName ||
                   "No especificado"}
               </p>
-              <p>
+              <p className="text-sm sm:text-base">
                 <strong>Email:</strong> {userInfo?.email}
               </p>
-              <p>
+              <p className="text-sm sm:text-base">
                 <strong>Teléfono:</strong>{" "}
                 {formatPhoneNumber(userProfile?.phone)}
               </p>
-              <p>
+              <p className="text-sm sm:text-base">
                 <strong>Miembro desde:</strong>{" "}
                 {userInfo?.metadata?.creationTime
                   ? new Date(
@@ -182,53 +180,8 @@ function AccountInfo() {
               </p>
             </div>
           </div>
-          <div className="flex space-x-2">
-            <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
-              <DialogTrigger asChild>
-                <Button className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white">
-                  Editar Perfil
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Editar Perfil</DialogTitle>
-                  <DialogDescription>
-                    Actualiza tu información personal
-                  </DialogDescription>
-                </DialogHeader>
-                <ProfileEditForm
-                  user={userInfo}
-                  onSuccess={handleSuccess}
-                  onClose={() => setShowEditProfile(false)}
-                />
-              </DialogContent>
-            </Dialog>
-            <ChangePasswordDialog
-              isOpen={showChangePassword}
-              onOpenChange={setShowChangePassword}
-              triggerButton={
-                <Button
-                  onClick={() => setShowChangePassword(true)}
-                  className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white"
-                >
-                  Cambiar Contraseña
-                </Button>
-              }
-            />
-            {!auth.currentUser.emailVerified && (
-              <SendEmailVerificationDialog
-                isOpen={showSendVerification}
-                onOpenChange={setShowSendVerification}
-                triggerButton={
-                  <Button
-                    onClick={() => setShowSendVerification(true)}
-                    className="mt-4 bg-opacity-90 text-black transition-colors duration-200 hover:text-white shadow-black shadow-lg bg-white"
-                  >
-                    Verificar Email
-                  </Button>
-                }
-              />
-            )}
+          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+            {/* Eliminar los botones y diálogos aquí */}
           </div>
         </div>
       </CardContent>

@@ -477,7 +477,7 @@ const BooksTab = () => {
           Administra el catálogo de libros de la biblioteca.
         </CardDescription>
       </CardHeader>
-      <CardContent className="bg-black overflow-y-auto max-h-[570px]">
+      <CardContent className=" overflow-y-auto max-h-[570px]">
         <div className="">
           <Dialog>
             <DialogTrigger className="absolute right-[65px]" asChild>

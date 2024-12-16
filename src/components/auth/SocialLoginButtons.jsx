@@ -109,7 +109,7 @@ const SocialLoginButtons = ({ setUiState, handleRedirect }) => {
           </span>
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-2 md:space-y-4">
         <Button
           onClick={handleGoogleSignIn}
           type="button"

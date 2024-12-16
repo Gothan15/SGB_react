@@ -58,7 +58,7 @@ import {
 import PanelHeader from "./ui/panel-header";
 import WelcomeUser from "./ui/welcome-user";
 import LoadinSpinner from "./ui/LoadinSpinner";
-import Sidebar from "./sidebar-dashboards";
+import Sidebar from "./ui/sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 
 import ReauthDialog from "./ui/ReauthDialog";

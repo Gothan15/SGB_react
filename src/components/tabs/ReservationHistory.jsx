@@ -235,9 +235,9 @@ export default function ReservationHistory() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white md:p-6 p-4">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-center">
           <div>
             <CardTitle>Historial de Reservas</CardTitle>
             <CardDescription>
@@ -263,7 +263,7 @@ export default function ReservationHistory() {
           </div>
         ) : (
           <div className="rounded-md border">
-            <Table>
+            <Table className="w-full overflow-x-auto">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

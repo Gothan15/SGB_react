@@ -50,7 +50,7 @@ import { toast } from "sonner";
 import LoadinSpinner from "./ui/LoadinSpinner";
 import WelcomeUser from "./ui/welcome-user";
 import PanelHeader from "./ui/panel-header";
-import Sidebar from "./sidebar-dashboards";
+import Sidebar from "./ui/sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 import ReauthDialog from "./ui/ReauthDialog";
 
@@ -339,8 +339,8 @@ const UserDashboard = () => {
         />
       )}
       <UserContext.Provider value={{ userData, loading }}>
-        <div className="md:w-[1920px] min-h-screen md:mx-auto p-6 bg-black bg-opacity-30 backdrop-blur-sm">
-          <div className="flex justify-between items-center mb-6">
+        <div className="md:w-full w-full min-h-screen mx-auto p-4 bg-black bg-opacity-30 backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
             <div className="rounded-md shadow-md shadow-black">
               <PanelHeader
                 panelName="Panel de Usuario"
@@ -348,7 +348,7 @@ const UserDashboard = () => {
               />
             </div>
 
-            <div className="absolute left-[300px] ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
+            <div className="absolute left-4 md:left-[300px] ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
               <WelcomeUser
                 userProfile={userData.userProfile}
                 userInfo={userData.userInfo}
@@ -395,8 +395,12 @@ const UserDashboard = () => {
             value={location.pathname.split("/").pop()}
             className="space-y-4"
           >
-            <TabsList className="border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
-              <TabsTrigger value="available" asChild>
+            <TabsList className="border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black flex-wrap">
+              <TabsTrigger
+                value="available"
+                asChild
+                className="w-full md:w-auto"
+              >
                 <NavLink
                   onClick={() => seticonLocation("Libros Disponibles")}
                   to="available"
@@ -406,7 +410,11 @@ const UserDashboard = () => {
                   Libros Disponibles
                 </NavLink>
               </TabsTrigger>
-              <TabsTrigger value="borrowed" asChild>
+              <TabsTrigger
+                value="borrowed"
+                asChild
+                className="w-full md:w-auto"
+              >
                 <NavLink
                   onClick={() => seticonLocation("Libros Prestados")}
                   to="borrowed"
@@ -416,7 +424,11 @@ const UserDashboard = () => {
                   Libros Reservados
                 </NavLink>
               </TabsTrigger>
-              <TabsTrigger value="reservations" asChild>
+              <TabsTrigger
+                value="reservations"
+                asChild
+                className="w-full md:w-auto"
+              >
                 <NavLink
                   onClick={() => seticonLocation("Historial de Reservas")}
                   to="reservations"
@@ -426,7 +438,7 @@ const UserDashboard = () => {
                   Historial de Reservas
                 </NavLink>
               </TabsTrigger>
-              <TabsTrigger value="account" asChild>
+              <TabsTrigger value="account" asChild className="w-full md:w-auto">
                 <NavLink
                   onClick={() => seticonLocation("Mi Cuenta")}
                   to="account"
@@ -438,7 +450,7 @@ const UserDashboard = () => {
               </TabsTrigger>
             </TabsList>
 
-            <div className="p-4">
+            <div className="p-2 md:p-4">
               <Outlet />
             </div>
           </Tabs>

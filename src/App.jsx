@@ -62,7 +62,7 @@ function App() {
 
   return (
     <div
-      className="text-white min-h-[100vh] flex justify-center items-center bg-center bg-cover"
+      className="text-white min-h-screen flex flex-col md:flex-row justify-center items-center bg-center bg-cover "
       style={{ backgroundImage: "url('/img/bg.jpeg')" }}
     >
       <Toaster richColors closeButton position="bottom-right" />

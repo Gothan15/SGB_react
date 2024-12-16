@@ -40,7 +40,7 @@ const PasswordResetForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-center bg-cover">
-      <div className="w-full max-w-md mx-[750px]  p-8 space-y-8 rounded-md bg-[#000000] bg-opacity-50 shadow-black shadow-lg backdrop-blur-sm">
+      <div className="w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8 p-8 space-y-8 rounded-md bg-[#000000] bg-opacity-50 shadow-black shadow-lg backdrop-blur-sm">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold">Restablecer Contraseña</h1>
           <p className="text-sm text-gray-400">
@@ -52,7 +52,7 @@ const PasswordResetForm = () => {
             <Input
               type="email"
               id="email"
-              className="w-full py-2.3 px-0 text-2xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:text-white focus:border-yellow-600 peer"
+              className="w-full py-2 px-0 text-lg sm:text-2xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:text-white focus:border-yellow-600 peer"
               placeholder=""
               required
               value={email}
@@ -68,7 +68,7 @@ const PasswordResetForm = () => {
           </div>
           <Button
             type="submit"
-            className="w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
+            className="w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
             disabled={loading}
           >
             {loading ? "Enviando..." : "Enviar correo de restablecimiento"}

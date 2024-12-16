@@ -62,7 +62,7 @@ import WelcomeUser from "./ui/welcome-user";
 
 import LoadinSpinner from "./ui/LoadinSpinner";
 import Bubble from "./ui/Bubble";
-import Sidebar from "./sidebar-dashboards";
+import Sidebar from "./ui/sidebar-dashboards";
 import ReauthDialog from "./ui/ReauthDialog";
 
 const BibPage = () => {

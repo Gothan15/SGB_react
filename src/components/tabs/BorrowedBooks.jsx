@@ -281,7 +281,7 @@ function BorrowedBooks() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop-blur-sm bg-white">
+    <Card className="bg-gradient-to-br from-white to-gray-200 shadow-lg backdrop-blur-sm md:p-6 p-4">
       <CardHeader>
         <CardTitle>Libros Prestados</CardTitle>
         <CardDescription>
@@ -344,7 +344,11 @@ function BorrowedBooks() {
                         <TableCell>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button size="sm" variant="destructive">
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="w-full md:w-auto"
+                              >
                                 <X className="mr-2 h-4 w-4" />
                                 Cancelar
                               </Button>
@@ -359,10 +363,15 @@ function BorrowedBooks() {
                               </DialogHeader>
                               <div className="flex justify-end space-x-2">
                                 <DialogTrigger asChild>
-                                  <Button variant="outline">No</Button>
+                                  <Button
+                                    variant="outline"
+                                    className="w-full md:w-auto"
+                                  >
+                                    No
+                                  </Button>
                                 </DialogTrigger>
                                 <Button
-                                  className="hover:bg-gradient-to-l hover:border-black hover:font-semibold from-red-700 transition-colors duration-200 to-black w-full"
+                                  className="hover:bg-gradient-to-l hover:border-black hover:font-semibold from-red-700 transition-colors duration-200 to-black w-full md:w-auto"
                                   onClick={() =>
                                     handleCancelReservation(
                                       reservation.id,
@@ -415,10 +424,10 @@ function BorrowedBooks() {
                             : "Fecha no disponible"}
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
+                          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button className="" size="sm">
+                                <Button className="w-full md:w-auto" size="sm">
                                   <RefreshCw className="mr-2 h-4 w-4" />
                                   Renovar
                                 </Button>
@@ -440,7 +449,7 @@ function BorrowedBooks() {
                             </Dialog>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button size="sm">
+                                <Button className="w-full md:w-auto" size="sm">
                                   <ArrowLeftRight className="mr-2 h-4 w-4" />
                                   Devolver
                                 </Button>

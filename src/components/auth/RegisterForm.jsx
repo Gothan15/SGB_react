@@ -1,28 +1,23 @@
 /* eslint-disable no-unused-vars */
 // React y Hooks
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import React, { useState, useCallback, useEffect } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
 // Firebase
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  GithubAuthProvider,
-  signInWithPopup,
 } from "firebase/auth";
 import {
   doc,
   setDoc,
   getDoc,
   Timestamp,
-  updateDoc,
   collection,
   query,
   getDocs,
   where,
-  deleteDoc,
 } from "firebase/firestore";
 import {
   auth,
@@ -31,30 +26,24 @@ import {
   BASE_LOCK_DURATION,
   MAX_LOCK_MULTIPLIER,
   PASSWORD_CONFIG,
-  functions,
 } from "@/firebaseConfig";
-import { httpsCallable } from "firebase/functions";
 
 // Iconos
-import { RiArrowRightDoubleFill } from "react-icons/ri";
 import { BiUser } from "react-icons/bi";
-import {
-  AiOutlineUnlock,
-  AiOutlineEye,
-  AiOutlineEyeInvisible,
-} from "react-icons/ai";
-import { Github, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { LogIn, UserPlus } from "lucide-react";
 
 // Componentes UI
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-import validatePassword from "./validatePassword";
-
 import SocialLoginButtons from "./SocialLoginButtons";
+
+// Importar hook personalizado y componente FormInput
+import useForm from "@/hooks/useForm";
+import FormInput from "./FormInput";
+import validatePassword from "./validatePassword"; // Importar validatePassword
 
 const RegisterForm = ({
   uiState,
@@ -66,13 +55,24 @@ const RegisterForm = ({
   remainingTime,
   setRemainingTime,
 }) => {
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     email: "",
     password: "",
     confirmPassword: "",
     role: "student",
     name: "",
-  });
+  };
+
+  const { formData, handleSubmit, setFormData } = useForm(
+    initialFormData,
+    async (data, e) => {
+      if (uiState.newUser) {
+        await handleRegister(e);
+      } else {
+        await handleLogin(e);
+      }
+    }
+  );
 
   const [showPasswords, setShowPasswords] = useState({
     password: false,
@@ -93,43 +93,33 @@ const RegisterForm = ({
     color: "",
   });
 
-  const navigate = useNavigate();
+  const [passwordsMatch, setPasswordsMatch] = useState({
+    match: true,
+    message: "",
+    color: "",
+  });
 
-  const captchaRef = useRef(null);
+  const navigate = useNavigate();
 
   // Redirige según el rol del usuario
   const handleRedirect = useCallback(
     (role) => {
       setUiState((prev) => ({ ...prev, loading: true }));
-      // Pequeño delay para asegurar que los estados se actualicen
       setTimeout(() => {
-        switch (role) {
-          case "admin":
-            navigate("/admin", { replace: true });
-            break;
-          case "atm":
-            navigate("/atm", { replace: true });
-            break;
-          case "student":
-            navigate("/student", { replace: true });
-            break;
-          default:
-            navigate("/register", { replace: true });
-        }
+        const routes = {
+          admin: "/admin",
+          atm: "/atm",
+          student: "/student",
+        };
+        navigate(routes[role] || "/register", { replace: true });
       }, 100);
     },
-    [navigate]
+    [navigate, setUiState]
   );
 
   // Agregar una función para reiniciar el formulario
-  const resetForm = () => {
-    setFormData({
-      email: "",
-      password: "",
-      confirmPassword: "",
-      role: "student",
-      name: "",
-    });
+  const resetForm = useCallback(() => {
+    setFormData(initialFormData);
     setPasswordValidation({
       strength: 0,
       checks: {},
@@ -142,7 +132,7 @@ const RegisterForm = ({
       message: "",
       color: "",
     });
-  };
+  }, [setFormData]);
 
   // Maneja el registro de un nuevo usuario
   const handleRegister = useCallback(
@@ -227,7 +217,7 @@ const RegisterForm = ({
         setUiState((prev) => ({ ...prev, loading: false }));
       }
     },
-    [formData, navigate, setUiState]
+    [formData, navigate, setUiState, resetForm]
   );
 
   // Maneja el inicio de sesión
@@ -300,7 +290,7 @@ const RegisterForm = ({
         setUiState((prev) => ({ ...prev, loading: false }));
       }
     },
-    [formData, navigate, setUiState]
+    [formData, navigate, setUiState, resetForm]
   );
 
   const checkLoginAttempts = async (email) => {
@@ -400,30 +390,25 @@ const RegisterForm = ({
 
   // Agregar efecto para actualizar el contador
   useEffect(() => {
-    let intervalId;
+    if (!isLocked || !lockExpiration) return;
 
-    if (isLocked && lockExpiration) {
-      intervalId = setInterval(() => {
-        const remaining = Math.max(
-          0,
-          Math.ceil((lockExpiration - new Date().getTime()) / 1000)
-        );
+    const intervalId = setInterval(() => {
+      const remaining = Math.max(
+        0,
+        Math.ceil((lockExpiration - Date.now()) / 1000)
+      );
 
-        if (remaining <= 0) {
-          setIsLocked(false);
-          setLockExpiration(null);
-          setRemainingTime(0);
-        } else {
-          setRemainingTime(remaining);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) {
+      if (remaining <= 0) {
+        setIsLocked(false);
+        setLockExpiration(null);
+        setRemainingTime(0);
         clearInterval(intervalId);
+      } else {
+        setRemainingTime(remaining);
       }
-    };
+    }, 1000);
+
+    return () => clearInterval(intervalId);
   }, [
     isLocked,
     lockExpiration,
@@ -433,24 +418,14 @@ const RegisterForm = ({
   ]);
 
   // Función auxiliar para formatear el tiempo
-  const formatTime = (seconds) => {
+  const formatTime = useCallback((seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
+  }, []);
 
-  // Modificar el input de contraseña en el registro
-  const handlePasswordChange = (e) => {
-    const newPassword = e.target.value;
-    setFormData((prev) => ({ ...prev, password: newPassword }));
-    if (uiState.newUser) {
-      setPasswordValidation(validatePassword(newPassword));
-    }
-  };
-
-  // Agregar función para verificar email
-  const validateEmail = async (email) => {
-    // Validar formato de email
+  // Agregar función para verificar email con useCallback
+  const validateEmail = useCallback(async (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isValidFormat = emailRegex.test(email);
 
@@ -465,7 +440,6 @@ const RegisterForm = ({
     }
 
     try {
-      // Buscar si el email ya existe
       const q = query(collection(db, "users"), where("email", "==", email));
       const querySnapshot = await getDocs(q);
 
@@ -482,61 +456,62 @@ const RegisterForm = ({
     } catch (error) {
       console.error("Error validando email:", error);
     }
-  };
+  }, []);
 
-  // Modificar el manejador del cambio de email
-  const handleEmailChange = (e) => {
-    const newEmail = e.target.value;
-    setFormData((prev) => ({ ...prev, email: newEmail }));
-    if (uiState.newUser && newEmail) {
-      validateEmail(newEmail);
-    }
-  };
+  // Agregar debounce para la validación de email
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (uiState.newUser && formData.email) {
+        validateEmail(formData.email);
+      }
+    }, 500);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("Iniciando verificación de reCAPTCHA...");
+    return () => clearTimeout(handler);
+  }, [formData.email, uiState.newUser, validateEmail]);
 
-    try {
-      console.log("Ejecutando reCAPTCHA v3...");
-      const token = await window.grecaptcha.execute(
-        "6LcpypkqAAAAANjqYhsE6expeptIsK1JH6ucYEwE",
-        { action: "submit" }
-      );
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
 
-      console.log("Token reCAPTCHA generado:", token ? "Válido" : "Inválido");
-      console.log("Longitud del token:", token?.length);
-
-      if (!token) {
-        console.error("Error: Token reCAPTCHA no generado");
-        toast.error("Error de verificación reCAPTCHA");
-        return;
+      if (name === "password") {
+        const validation = validatePassword(value);
+        setPasswordValidation(validation);
       }
 
-      console.log(
-        "Verificación reCAPTCHA exitosa, procediendo con el formulario..."
-      );
+      if (name === "password" || name === "confirmPassword") {
+        const password = name === "password" ? value : formData.password;
+        const confirmPassword =
+          name === "confirmPassword" ? value : formData.confirmPassword;
 
-      if (uiState.newUser) {
-        console.log("Iniciando proceso de registro...");
-        await handleRegister(e);
-      } else {
-        console.log("Iniciando proceso de login...");
-        await handleLogin(e);
+        if (password && confirmPassword) {
+          if (password === confirmPassword) {
+            setPasswordsMatch({
+              match: true,
+              message: "Las contraseñas coinciden",
+              color: "text-green-500",
+            });
+          } else {
+            setPasswordsMatch({
+              match: false,
+              message: "Las contraseñas no coinciden",
+              color: "text-red-500",
+            });
+          }
+        } else {
+          setPasswordsMatch({
+            match: false,
+            message: "Por favor confirma tu contraseña",
+            color: "text-red-500",
+          });
+        }
       }
-    } catch (error) {
-      console.error("Error en la verificación reCAPTCHA:", error);
-      console.error("Detalles del error:", {
-        mensaje: error.message,
-        nombre: error.name,
-        stack: error.stack,
-      });
-      toast.error("Error en la verificación de seguridad");
-    }
-  };
+    },
+    [formData.password, formData.confirmPassword, setFormData]
+  );
 
   return (
-    <div className="w-full max-w-md space-y-8 px-4">
+    <div className="w-full max-w-md mx-auto space-y-6 px-2 md:px-4">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Sistema de Gestión Bibliotecaria</h1>
         <p className="text-sm text-gray-400">
@@ -544,180 +519,93 @@ const RegisterForm = ({
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid gap-3 space-y-4">
+      <form onSubmit={handleSubmit} className="grid gap-2 md:gap-3 space-y-4">
         {uiState.newUser && (
-          <div className="relative text-2xl focus:outline-none focus:ring-0">
-            <Input
-              type="text"
-              id="name"
-              className=" w-full  py-2.3 px-0 text-2xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:focus:border-yellow-500 focus:outline-none focus:ring-0  focus:text-white focus:border-yellow-600 peer"
-              placeholder=""
-              required
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  name: e.target.value,
-                }))
-              }
-            />
-            <label
-              htmlFor="name"
-              className="absolute text-gray-400 duration-300 transform  translate-y-[-58px] scale-75   origin-[0] peer-focus:translate-y-[-58px] peer-focus:text-yellow-600 peer-focus:dark:text-yellow-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-32px] peer-focus:scale-75 font-sans antialiased font-semibold text-xl  "
-            >
-              Nombre
-            </label>
-            <BiUser className="absolute text-white right-[5px] top-[5px] transform   text-2xl" />
-          </div>
+          <FormInput
+            type="text"
+            id="name"
+            name="name"
+            label="Nombre"
+            value={formData.name}
+            onChange={handleChange}
+            icon={BiUser}
+          />
         )}
-        <div className="relative text-2xl focus:outline-none focus:ring-0">
-          <Input
-            type="email"
-            id="email"
-            className=" w-full  py-2.3 px-0 text-2xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:focus:border-yellow-500 focus:outline-none focus:ring-0  focus:text-white focus:border-yellow-600 peer"
-            placeholder=""
-            required
-            value={formData.email}
-            onChange={handleEmailChange}
-          />
-          <label
-            htmlFor="email"
-            className="absolute text-gray-400 duration-300 transform  translate-y-[-58px] scale-75   origin-[0] peer-focus:translate-y-[-58px] peer-focus:text-yellow-600 peer-focus:dark:text-yellow-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-32px] peer-focus:scale-75 font-sans antialiased font-semibold text-xl  "
-          >
-            Correo
-          </label>
-          <Mail className="absolute text-white right-[5px] top-[5px] transform   text-2xl" />
-          {uiState.newUser && formData.email && (
-            <div className="mt-2">
-              <p
-                className={` text-xl text-justify  font-semibold  rounded-md ${emailValidation.color}`}
-              >
-                {emailValidation.message}
-              </p>
-            </div>
-          )}
-        </div>
-        <div className="relative ">
-          <Input
-            type={showPasswords.password ? "text" : "password"}
-            id="password"
-            className=" w-full  py-2.3 px-0 text-xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:focus:border-yellow-500 focus:outline-none focus:ring-0  focus:text-white focus:border-yellow-600 peer"
-            placeholder=""
-            required
-            value={formData.password}
-            onChange={handlePasswordChange}
-          />
-          <label
-            htmlFor="password"
-            className="absolute focus:outline-none text-gray-400 duration-300 transform  translate-y-[-58px] scale-75   origin-[0] peer-focus:translate-y-[-58px] peer-focus:text-yellow-600 peer-focus:dark:text-yellow-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-32px] peer-focus:scale-75 font-sans antialiased font-semibold text-xl  "
-          >
-            Contraseña
-          </label>
-          <div className="absolute right-[5px] top-[5px] flex gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setShowPasswords((prev) => ({
-                  ...prev,
-                  password: !prev.password,
-                }))
-              }
-              className="text-white hover:text-yellow-500 transition-colors"
-            >
-              {showPasswords.password ? (
-                <AiOutlineEyeInvisible className="text-2xl" />
-              ) : (
-                <AiOutlineEye className="text-2xl" />
-              )}
-            </button>
-            <AiOutlineUnlock className="text-white text-2xl" />
-          </div>
-          {uiState.newUser && formData.password && (
-            <div className="mt-2">
-              <p className={`text-sm ${passwordValidation.color}`}>
-                Fortaleza: {passwordValidation.message}
-              </p>
-              <div className="text-xs space-y-1 mt-1 text-gray-300">
-                {!passwordValidation.checks.length && (
-                  <p>• Mínimo 8 caracteres</p>
-                )}
-                {!passwordValidation.checks.hasUpper && (
-                  <p>• Al menos una mayúscula</p>
-                )}
-                {!passwordValidation.checks.hasLower && (
-                  <p>• Al menos una minúscula</p>
-                )}
-                {!passwordValidation.checks.hasNumber && (
-                  <p>• Al menos un número</p>
-                )}
-                {!passwordValidation.checks.hasSpecial && (
-                  <p>• Al menos un carácter especial</p>
-                )}
+
+        <FormInput
+          type="email"
+          id="email"
+          name="email"
+          label="Correo"
+          value={formData.email}
+          onChange={handleChange}
+          icon={Mail}
+          validationMessage={
+            uiState.newUser && formData.email ? emailValidation.message : ""
+          }
+          validationColor={emailValidation.color}
+        />
+
+        <FormInput
+          type={showPasswords.password ? "text" : "password"}
+          id="password"
+          name="password"
+          label="Contraseña"
+          value={formData.password}
+          onChange={handleChange}
+          showPasswordToggle
+          isPasswordVisible={showPasswords.password}
+          togglePassword={() =>
+            setShowPasswords((prev) => ({ ...prev, password: !prev.password }))
+          }
+          validationMessage={
+            uiState.newUser &&
+            formData.password && (
+              <div className="mt-2">
+                <p className={`text-sm ${passwordValidation.color}`}>
+                  Fortaleza: {passwordValidation.message}
+                </p>
+                <div className="text-xs space-y-1 mt-1 text-gray-300">
+                  {!passwordValidation.checks.length && (
+                    <p>• Mínimo 8 caracteres</p>
+                  )}
+                  {!passwordValidation.checks.hasUpper && (
+                    <p>• Al menos una mayúscula</p>
+                  )}
+                  {!passwordValidation.checks.hasLower && (
+                    <p>• Al menos una minúscula</p>
+                  )}
+                  {!passwordValidation.checks.hasNumber && (
+                    <p>• Al menos un número</p>
+                  )}
+                  {!passwordValidation.checks.hasSpecial && (
+                    <p>• Al menos un carácter especial</p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )
+          }
+        />
 
         {uiState.newUser && (
-          <div className="relative ">
-            <Input
-              type={showPasswords.confirmPassword ? "text" : "password"}
-              id="confirmPassword"
-              className=" w-full  py-2.3 px-0 text-xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:focus:border-yellow-500 focus:outline-none focus:ring-0  focus:text-white focus:border-yellow-600 peer"
-              placeholder=""
-              required
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData((prevState) => ({
-                  ...prevState,
-                  confirmPassword: e.target.value,
-                }))
-              }
-            />
-            <label
-              htmlFor="confirmpassword"
-              className="absolute focus:outline-none text-gray-400 duration-300 transform  translate-y-[-58px] scale-75   origin-[0] peer-focus:translate-y-[-58px] peer-focus:text-yellow-600 peer-focus:dark:text-yellow-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-32px] peer-focus:scale-75 font-sans antialiased font-semibold text-xl  "
-            >
-              Confirma Contraseña
-            </label>
-            <div className="absolute right-[5px] top-[5px] flex gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setShowPasswords((prev) => ({
-                    ...prev,
-                    confirmPassword: !prev.confirmPassword,
-                  }))
-                }
-                className="text-white hover:text-yellow-500 transition-colors"
-              >
-                {showPasswords.confirmPassword ? (
-                  <AiOutlineEyeInvisible className="text-2xl" />
-                ) : (
-                  <AiOutlineEye className="text-2xl" />
-                )}
-              </button>
-              <AiOutlineUnlock className="text-white text-2xl" />
-            </div>
-          </div>
-        )}
-
-        {uiState.newUser ? (
-          <Button
-            type="submit"
-            className="w-full shadow-sm  shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
-          >
-            <UserPlus className="h-5 w-5" />
-            Registrarse
-          </Button>
-        ) : (
-          <Button
-            type="submit"
-            className="w-full shadow-sm  shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
-          >
-            <LogIn className="h-5 w-5" />
-            Inicia Sesión
-          </Button>
+          <FormInput
+            type={showPasswords.confirmPassword ? "text" : "password"}
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Confirma Contraseña"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            showPasswordToggle
+            isPasswordVisible={showPasswords.confirmPassword}
+            togglePassword={() =>
+              setShowPasswords((prev) => ({
+                ...prev,
+                confirmPassword: !prev.confirmPassword,
+              }))
+            }
+            validationMessage={passwordsMatch.message}
+            validationColor={passwordsMatch.color}
+          />
         )}
 
         {/* Botones de autenticación social */}
@@ -726,52 +614,60 @@ const RegisterForm = ({
           handleRedirect={handleRedirect}
         />
 
-        <div className="  mx-5">
-          <div className=" text-center rounded-md  border-0 border-b-2 border-white px-4     text-zinc-400 mx-5">
-            {uiState.newUser ? (
-              <>
-                <Label className="text-white  mr-3 text-center ">
-                  Ya tienes cuenta?
-                </Label>
-                <Label
-                  onClick={() => {
-                    setUiState((prevState) => ({
-                      ...prevState,
-                      newUser: false,
-                      error: "", // Cambiar false por cadena vacía
-                    }));
-                  }}
-                  className="text-yellow-500 hover:underline  text-center font-bold "
-                >
-                  Inicia Sesión!
-                </Label>
-              </>
-            ) : (
-              <>
-                <span className="text-white  mr-3 text-center ">
-                  No tienes cuenta?
-                </span>
-                <span
-                  onClick={() => {
-                    setUiState((prevState) => ({
-                      ...prevState,
-                      newUser: true,
-                      error: "", // Cambiar false por cadena vacía
-                    }));
-                  }}
-                  className="text-yellow-500 hover:underline text-center font-bold  "
-                >
-                  Regístrate!
-                </span>
-              </>
-            )}
-          </div>
+        {/* Botones de registro/inicio de sesión */}
+        {uiState.newUser ? (
+          <Button
+            type="submit"
+            className="w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
+          >
+            <UserPlus className="h-5 w-5" />
+            Registrarse
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            className="w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
+          >
+            <LogIn className="h-5 w-5" />
+            Inicia Sesión
+          </Button>
+        )}
+
+        {/* Enlaces de registro/inicio de sesión */}
+        <div className="mx-5 text-center rounded-md border-b-2 border-white text-zinc-400">
+          {uiState.newUser ? (
+            <>
+              <Label className="text-white mr-3">Ya tienes cuenta?</Label>
+              <Label
+                onClick={() =>
+                  setUiState((prev) => ({ ...prev, newUser: false, error: "" }))
+                }
+                className="text-yellow-500 hover:underline font-bold cursor-pointer"
+              >
+                Inicia Sesión!
+              </Label>
+            </>
+          ) : (
+            <>
+              <span className="text-white mr-3">No tienes cuenta?</span>
+              <span
+                onClick={() =>
+                  setUiState((prev) => ({ ...prev, newUser: true, error: "" }))
+                }
+                className="text-yellow-500 hover:underline font-bold cursor-pointer"
+              >
+                Regístrate!
+              </span>
+            </>
+          )}
         </div>
+
+        {/* Enlace de recuperación de contraseña */}
         {!uiState.newUser && (
-          <div className="text-center mt-4  ">
+          <div className="text-center mt-4">
             <span
               onClick={() => navigate("/reset-password")}
-              className="text-yellow-500 hover:underline rounded-md border-0 border-b-2 border-white text-center font-bold cursor-pointer"
+              className="text-yellow-500 hover:underline rounded-md border-b-2 border-white font-bold cursor-pointer"
             >
               ¿Olvidaste tu contraseña?
             </span>
@@ -779,6 +675,7 @@ const RegisterForm = ({
         )}
       </form>
 
+      {/* Mensajes de error y bloqueo */}
       {uiState.error && (
         <p className="bg-red-800 text-white text-center p-1 uppercase font-bold mt-3 mb-1 rounded-md">
           {uiState.error}
@@ -791,13 +688,9 @@ const RegisterForm = ({
           minutos.
         </div>
       )}
+
       <div className="p-4">
-        <Outlet
-          context={{
-            setUiState,
-            handleRedirect,
-          }}
-        />
+        <Outlet context={{ setUiState, handleRedirect }} />
       </div>
     </div>
   );
@@ -816,6 +709,21 @@ RegisterForm.propTypes = {
   setLockExpiration: PropTypes.func.isRequired,
   remainingTime: PropTypes.number,
   setRemainingTime: PropTypes.func.isRequired,
+};
+
+FormInput.propTypes = {
+  type: PropTypes.string.isRequired,
+  id: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  label: PropTypes.string,
+  icon: PropTypes.elementType,
+  showPasswordToggle: PropTypes.bool,
+  isPasswordVisible: PropTypes.bool,
+  togglePassword: PropTypes.func,
+  validationMessage: PropTypes.string,
+  validationColor: PropTypes.string,
 };
 
 export default RegisterForm;
