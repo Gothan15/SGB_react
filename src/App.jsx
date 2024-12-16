@@ -19,7 +19,7 @@ const Home = lazy(() => import("./components/Home"));
 const Register = lazy(() => import("./components/Register"));
 const BibPage = lazy(() => import("./components/Bibliotecario-dashboard"));
 const AdminPage = lazy(() => import("./components/Admin-dashboard"));
-const UserDashboard = lazy(() => import("./components/User-dashboard"));
+const UserDashboard = lazy(() => import("src/components/User-dashboard"));
 
 function App() {
   const [userRole, setUserRole] = useState(null);
