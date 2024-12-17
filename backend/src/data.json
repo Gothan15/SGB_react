@@ -1,0 +1,16 @@
+{
+  "books": [
+    {
+      "id": "1",
+      "title": "El Quijote",
+      "author": "Miguel de Cervantes",
+      "status": "Disponible"
+    },
+    {
+      "id": "2",
+      "title": "Cien Años de Soledad",
+      "author": "Gabriel García Márquez",
+      "status": "Prestado"
+    }
+  ]
+}
