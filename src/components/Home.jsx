@@ -23,7 +23,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 const Home = () => {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen w-full sm:w-[100%] md:w-[1920px] bg-opacity-30 bg-black ">
+    <div className="min-h-screen w-full sm:w-[100%] md:w-[1920px] bg-opacity-30 bg-black flex flex-col">
       <header className="bg-white shadow-md shadow-black bg-opacity-90">
         <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-black font-serif flex items-center">
@@ -35,12 +35,12 @@ const Home = () => {
               <li>
                 <Button
                   onClick={() => navigate("/register")}
-                  className="border-0 absolute top-10  right-10 pr-6 shadow-md shadow-black font-semibold h hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70"
+                  className="xl:absolute   xl:top-10 xl:right-5 border-0 pr-6 shadow-md shadow-black font-semibold hover:border-2 text-black hover:border-black hover:bg-white hover:bg-opacity-100 bg-white bg-opacity-70"
                   variant="outline"
                 >
                   Acceso
                   <LuArrowBigRightDash
-                    className="text-black absolute right-1 text-lg "
+                    className="text-black ml-2 text-lg"
                     size={20}
                   />
                 </Button>
@@ -53,7 +53,7 @@ const Home = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12 flex-grow">
         <section className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
             Bienvenido a tu Biblioteca Digital
@@ -128,7 +128,7 @@ const Home = () => {
         </section>
       </main>
 
-      <footer className="bg-gray-100 py-4 sm:py-6 absolute w-full bottom-0">
+      <footer className="bg-gray-100 py-4 sm:py-6 w-full">
         <div className="container mx-auto px-4 text-center text-gray-600">
           <p>
             &copy; 2024 Sistema de Gestión de Biblioteca. Todos los derechos

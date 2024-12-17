@@ -285,7 +285,7 @@ const UsersTab = () => {
             placeholder={`Buscar ${
               tableType === "users" ? "usuario" : "libro"
             }...`}
-            className="max-w-sm"
+            className="w-auto  max-w-sm"
             value={table.getState().globalFilter ?? ""}
             onChange={(e) => handleSearch(e.target.value, tableType)}
           />

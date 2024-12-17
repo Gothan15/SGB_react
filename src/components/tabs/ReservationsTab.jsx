@@ -333,93 +333,101 @@ const ReservationsTab = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white mt-6">
-      <CardHeader>
-        <CardTitle>Solicitudes de Reservas Pendientes</CardTitle>
-        <CardDescription>
+    <Card className="w-full bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white mt-6">
+      <CardHeader className="p-4 md:p-6">
+        <CardTitle className="text-lg md:text-xl">
+          Solicitudes de Reservas Pendientes
+        </CardTitle>
+        <CardDescription className="text-sm md:text-base">
           Administra las solicitudes de reservas pendientes.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Portada</TableHead>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Libro</TableHead>
-              <TableHead>Fecha de Solicitud</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.pendingReservations
-              .sort((a, b) => a.requestedAt?.toDate() - b.requestedAt?.toDate())
-              .map((reservation, index) => (
-                <TableRow key={reservation.id}>
-                  <TableCell className="flex justify-center">
-                    <BookCover
-                      imageUrl={reservation.imageUrl} // Cambiado de coverURL a imageUrl
-                      title={reservation.bookTitle}
-                    />
-                  </TableCell>
-                  <TableCell>{reservation.userName}</TableCell>
-                  <TableCell>{reservation.bookTitle}</TableCell>
-                  <TableCell>
-                    {reservation.requestedAt?.toDate().toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <Badge>{reservation.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {reservation.status === "Pendiente" && (
-                      <div className="flex space-x-2">
-                        {index === 0 ? (
-                          // Botones habilitados para la primera solicitud
-                          <>
-                            <Button
-                              onClick={() =>
-                                handleApproveReservation(
-                                  reservation.id,
-                                  reservation.bookId,
-                                  reservation.userId
-                                )
-                              }
-                              className="bg-green-500 hover:bg-green-700"
-                            >
-                              Aprobar
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                handleRejectReservation(
-                                  reservation.id,
-                                  reservation.userId,
-                                  reservation.bookId
-                                )
-                              }
-                              className="bg-red-500 hover:bg-red-700"
-                            >
-                              Rechazar
-                            </Button>
-                          </>
-                        ) : (
-                          // Botones deshabilitados para el resto de solicitudes
-                          <>
-                            <Button disabled className="bg-gray-400">
-                              Aprobar
-                            </Button>
-                            <Button disabled className="bg-gray-400">
-                              Rechazar
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+      <CardContent className="p-2 md:p-6 overflow-x-auto">
+        <div className="min-w-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[60px] md:w-[80px]">Portada</TableHead>
+                <TableHead className="hidden md:table-cell">Usuario</TableHead>
+                <TableHead>Libro</TableHead>
+                <TableHead className="hidden md:table-cell">Fecha</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.pendingReservations
+                .sort(
+                  (a, b) => a.requestedAt?.toDate() - b.requestedAt?.toDate()
+                )
+                .map((reservation, index) => (
+                  <TableRow key={reservation.id}>
+                    <TableCell className="flex justify-center">
+                      <BookCover
+                        imageUrl={reservation.imageUrl} // Cambiado de coverURL a imageUrl
+                        title={reservation.bookTitle}
+                      />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {reservation.userName}
+                    </TableCell>
+                    <TableCell>{reservation.bookTitle}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {reservation.requestedAt?.toDate().toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge>{reservation.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {reservation.status === "Pendiente" && (
+                        <div className="flex space-x-2">
+                          {index === 0 ? (
+                            // Botones habilitados para la primera solicitud
+                            <>
+                              <Button
+                                onClick={() =>
+                                  handleApproveReservation(
+                                    reservation.id,
+                                    reservation.bookId,
+                                    reservation.userId
+                                  )
+                                }
+                                className="bg-green-500 hover:bg-green-700"
+                              >
+                                Aprobar
+                              </Button>
+                              <Button
+                                onClick={() =>
+                                  handleRejectReservation(
+                                    reservation.id,
+                                    reservation.userId,
+                                    reservation.bookId
+                                  )
+                                }
+                                className="bg-red-500 hover:bg-red-700"
+                              >
+                                Rechazar
+                              </Button>
+                            </>
+                          ) : (
+                            // Botones deshabilitados para el resto de solicitudes
+                            <>
+                              <Button disabled className="bg-gray-400">
+                                Aprobar
+                              </Button>
+                              <Button disabled className="bg-gray-400">
+                                Rechazar
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

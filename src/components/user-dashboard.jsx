@@ -7,11 +7,9 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   doc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
-  writeBatch,
   setDoc,
   getDoc,
   addDoc,
@@ -57,7 +55,7 @@ import ReauthDialog from "./ui/ReauthDialog";
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [IconLocation, seticonLocation] = useState("Libros Prestados");
+  const [IconLocation, seticonLocation] = useState("Libros Reservados");
 
   // Estados principales
   const [userData, setUserData] = useState({
@@ -101,6 +99,30 @@ const UserDashboard = () => {
         clearTimeout(inactivityTimeoutRef.current);
     };
   }, [resetInactivityTimeout]);
+
+  // Verificar expiración de sesión
+  const checkSessionExpiration = useCallback(() => {
+    const intervalId = setInterval(() => {
+      const sessionStartTime = parseInt(
+        localStorage.getItem("sessionStartTime"),
+        10
+      );
+      const currentTime = Date.now();
+
+      if (currentTime - sessionStartTime >= SESSION_EXPIRATION_DURATION) {
+        clearInterval(intervalId);
+
+        // Eliminar datos de sesión de Firestore y localStorage
+        localStorage.removeItem("sessionStartTime");
+        deleteDoc(doc(db, "activeSessions", auth.currentUser.uid));
+
+        // Mostrar diálogo de reautenticación
+        setShowReauthDialog(true);
+      }
+    }, 1000); // Verificar cada segundo
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Efecto para cargar datos iniciales y recargar al cambiar de ruta
   useEffect(() => {
@@ -240,31 +262,7 @@ const UserDashboard = () => {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
-
-  // Verificar expiración de sesión
-  const checkSessionExpiration = useCallback(() => {
-    const intervalId = setInterval(() => {
-      const sessionStartTime = parseInt(
-        localStorage.getItem("sessionStartTime"),
-        10
-      );
-      const currentTime = Date.now();
-
-      if (currentTime - sessionStartTime >= SESSION_EXPIRATION_DURATION) {
-        clearInterval(intervalId);
-
-        // Eliminar datos de sesión de Firestore y localStorage
-        localStorage.removeItem("sessionStartTime");
-        deleteDoc(doc(db, "activeSessions", auth.currentUser.uid));
-
-        // Mostrar diálogo de reautenticación
-        setShowReauthDialog(true);
-      }
-    }, 1000); // Verificar cada segundo
-
-    return () => clearInterval(intervalId);
-  }, []);
+  }, [checkSessionExpiration, navigate]);
 
   // Efecto para suscribirse a las notificaciones
   useEffect(() => {
@@ -355,7 +353,7 @@ const UserDashboard = () => {
               />
             </div>
 
-            <div className="fixed bottom-6 right-6 z-50">
+            <div className="fixed bottom-6 right-6 z-[9999]">
               <button
                 className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
                   isFabOpen ? "rotate-45 scale-110" : ""
@@ -395,50 +393,43 @@ const UserDashboard = () => {
             value={location.pathname.split("/").pop()}
             className="space-y-4"
           >
-            <TabsList className="border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black flex-wrap">
-              <TabsTrigger
-                value="available"
-                asChild
-                className="w-full md:w-auto"
-              >
+            <TabsList className=" border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black sm:w-auto overflow-x-auto">
+              <TabsTrigger value="available" asChild className=" md:w-auto">
                 <NavLink
                   onClick={() => seticonLocation("Libros Disponibles")}
                   to="available"
                   className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
                 >
                   <BookIcon className="mr-2 h-4 w-4" />
-                  Libros Disponibles
+                  <span className="hidden md:inline">Libros Disponibles</span>
+                  <span className="md:hidden">Disp.</span>
                 </NavLink>
               </TabsTrigger>
-              <TabsTrigger
-                value="borrowed"
-                asChild
-                className="w-full md:w-auto"
-              >
+              <TabsTrigger value="borrowed" asChild className=" md:w-auto">
                 <NavLink
-                  onClick={() => seticonLocation("Libros Prestados")}
+                  onClick={() => seticonLocation("Libros Reservados")}
                   to="borrowed"
                   className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
                 >
                   <BookOpenIcon className="mr-2 h-4 w-4" />
-                  Libros Reservados
+                  <span className="hidden md:inline">Libros Reservados</span>
+                  <span className="md:hidden">Reserv.</span>
                 </NavLink>
               </TabsTrigger>
-              <TabsTrigger
-                value="reservations"
-                asChild
-                className="w-full md:w-auto"
-              >
+              <TabsTrigger value="reservations" asChild className=" md:w-auto">
                 <NavLink
                   onClick={() => seticonLocation("Historial de Reservas")}
                   to="reservations"
                   className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  Historial de Reservas
+                  <span className="hidden md:inline">
+                    Historial de Reservas
+                  </span>
+                  <span className="md:hidden">Historial</span>
                 </NavLink>
               </TabsTrigger>
-              <TabsTrigger value="account" asChild className="w-full md:w-auto">
+              <TabsTrigger value="account" asChild className=" md:w-auto">
                 <NavLink
                   onClick={() => seticonLocation("Mi Cuenta")}
                   to="account"

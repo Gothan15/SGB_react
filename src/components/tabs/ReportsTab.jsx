@@ -119,81 +119,89 @@ function ReportsTab() {
 
   return (
     <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart className="h-6 w-6" />
+      <CardHeader className="p-4 md:p-6">
+        <CardTitle className="text-lg md:text-xl">
           Informes y Estadísticas
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-sm md:text-base">
           Genera informes detallados sobre el uso de la biblioteca
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Tiempos de Espera</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Análisis de tiempos de espera para reservas
-            </p>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button onClick={generateWaitTimeReport} className="w-full">
-                  <Clock className="mr-2 h-4 w-4" />
-                  Generar Informe
-                </Button>
-              </DialogTrigger>
-              <WaitTimeDialog data={waitTimeData} />
-            </Dialog>
-          </CardContent>
-        </Card>
+      <CardContent className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Tarjetas de informes */}
+          <Card className="w-full">
+            <CardHeader className="p-4">
+              <CardTitle className="text-base md:text-lg">
+                Tiempos de Espera
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <p className="text-xs md:text-sm text-muted-foreground mb-4">
+                Análisis de tiempos de espera para reservas
+              </p>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button onClick={generateWaitTimeReport} className="w-full">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Generar Informe
+                  </Button>
+                </DialogTrigger>
+                <WaitTimeDialog data={waitTimeData} />
+              </Dialog>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Libros Más Solicitados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Ranking de libros más populares
-            </p>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={generateMostRequestedReport}
-                  className="w-full"
-                >
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Generar Informe
-                </Button>
-              </DialogTrigger>
-              <MostRequestedDialog data={mostRequestedData} />
-            </Dialog>
-          </CardContent>
-        </Card>
+          <Card className="w-full">
+            <CardHeader className="p-4">
+              <CardTitle className="text-base md:text-lg">
+                Libros Más Solicitados
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <p className="text-xs md:text-sm text-muted-foreground mb-4">
+                Ranking de libros más populares
+              </p>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={generateMostRequestedReport}
+                    className="w-full"
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Generar Informe
+                  </Button>
+                </DialogTrigger>
+                <MostRequestedDialog data={mostRequestedData} />
+              </Dialog>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Estado de Reservas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Resumen de estados de reservas
-            </p>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  onClick={generateReservationStatusReport}
-                  className="w-full"
-                >
-                  <BarChart2 className="mr-2 h-4 w-4" />
-                  Generar Informe
-                </Button>
-              </DialogTrigger>
-              <ReservationStatusDialog data={reservationStatusData} />
-            </Dialog>
-          </CardContent>
-        </Card>
+          <Card className="w-full">
+            <CardHeader className="p-4">
+              <CardTitle className="text-base md:text-lg">
+                Estado de Reservas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <p className="text-xs md:text-sm text-muted-foreground mb-4">
+                Resumen de estados de reservas
+              </p>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={generateReservationStatusReport}
+                    className="w-full"
+                  >
+                    <BarChart2 className="mr-2 h-4 w-4" />
+                    Generar Informe
+                  </Button>
+                </DialogTrigger>
+                <ReservationStatusDialog data={reservationStatusData} />
+              </Dialog>
+            </CardContent>
+          </Card>
+        </div>
       </CardContent>
     </Card>
   );

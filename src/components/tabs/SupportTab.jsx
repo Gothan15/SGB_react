@@ -157,38 +157,40 @@ const SupportTab = () => {
 
   return (
     <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
-      <CardHeader>
-        <CardTitle>Centro de Soporte y Reportes</CardTitle>
-        <CardDescription>
-          Gestiona y da seguimiento a los reportes de problemas enviados por los
-          usuarios.
+      <CardHeader className="p-4 md:p-6">
+        <CardTitle className="text-lg md:text-xl">Centro de Soporte</CardTitle>
+        <CardDescription className="text-sm md:text-base">
+          Gestiona y da seguimiento a los reportes de usuarios
         </CardDescription>
       </CardHeader>
-      <CardContent className="overflow-x-auto overflow-y-auto max-h-[570px]">
-        {tickets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <MessageSquare className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              No hay reportes pendientes
-            </h3>
-            <p className="text-gray-500 text-center">
-              Los nuevos reportes de soporte aparecerán aquí cuando los usuarios
-              los envíen.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center space-x-2 mb-4">
-              <Input
-                placeholder="Buscar en reportes..."
-                value={globalFilter}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="max-w-sm"
-              />
+      <CardContent className="p-2 md:p-4 overflow-x-auto overflow-y-auto max-h-[70vh] md:max-h-[570px]">
+        <div className="w-full min-w-[300px]">
+          {tickets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-6 md:py-12">
+              <MessageSquare className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2 text-center">
+                No hay reportes pendientes
+              </h3>
+              <p className="text-sm md:text-base text-gray-500 text-center px-4">
+                Los nuevos reportes aparecerán aquí
+              </p>
             </div>
-            {renderTable(table, "tickets")}
-          </>
-        )}
+          ) : (
+            <>
+              <div className="flex flex-col space-y-2 mb-4">
+                <Input
+                  placeholder="Buscar en reportes..."
+                  value={globalFilter}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div className="overflow-x-auto -mx-2 md:mx-0">
+                {renderTable(table, "tickets")}
+              </div>
+            </>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

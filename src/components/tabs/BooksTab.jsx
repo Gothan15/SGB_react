@@ -374,12 +374,10 @@ const BooksTab = () => {
       {tableType !== "tickets" && (
         <div className="flex items-center space-x-2 mb-4">
           <Input
-            placeholder={`Buscar ${
-              tableType === "users" ? "usuario" : "libro"
-            }...`}
-            className="max-w-sm"
-            value={table.getState().globalFilter ?? ""}
-            onChange={(e) => handleSearch(e.target.value, tableType)}
+            placeholder="Buscar libro..."
+            className="w-auto md:w-auto max-w-sm"
+            value={booksTable.getState().globalFilter ?? ""}
+            onChange={(e) => handleSearch(e.target.value, "books")}
           />
         </div>
       )}
@@ -481,9 +479,10 @@ const BooksTab = () => {
         <div className="">
           <Dialog>
             <DialogTrigger className="absolute right-[65px]" asChild>
-              <Button size="sm">
-                <BookPlus className="h-4 w-4" />
-                Agregar Nuevo Libro
+              <Button size="sm" className="mb-4 md:mb-0">
+                <BookPlus className="h-4 w-4 mr-2" />
+                <span className="hidden md:inline">Agregar Nuevo Libro</span>
+                <span className="md:hidden">Agregar</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

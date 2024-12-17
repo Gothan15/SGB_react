@@ -7,15 +7,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -32,8 +28,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/firebaseConfig";
 import { toast } from "sonner";
-import { BookIcon, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { BookIcon, SearchIcon } from "lucide-react"; // Añadir import de SearchIcon
 import BookReservationForm from "../dialogs/book-reservation-form";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import {
@@ -44,6 +39,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { BookmarkIcon, BookmarkCheck } from "lucide-react";
+import { Input } from "@/components/ui/input"; // Añadir import de Input
 
 function AvailableBooks() {
   const [availableBooks, setAvailableBooks] = useState([]);
@@ -53,6 +49,7 @@ function AvailableBooks() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [open, setOpen] = useState(false);
   const [futureReadingIds, setFutureReadingIds] = useState([]);
+  const [filterQuery, setFilterQuery] = useState(""); // Reemplazar filterTitle y filterAuthor
 
   useEffect(() => {
     const fetchAvailableBooks = async () => {
@@ -221,9 +218,17 @@ function AvailableBooks() {
     }
   };
 
+  const filteredBooks = availableBooks.filter((book) => {
+    const query = filterQuery.toLowerCase();
+    return (
+      book.title.toLowerCase().includes(query) ||
+      book.author.toLowerCase().includes(query)
+    );
+  });
+
   if (loading) {
     return (
-      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
+      <Card className="border-transparent bg-transparent relative justify-center items-center flex min-h-auto">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>
@@ -239,9 +244,21 @@ function AvailableBooks() {
           <CardDescription>
             Explora y reserva libros disponibles en nuestra biblioteca.
           </CardDescription>
+          <div className="flex items-center space-x-2 mt-4">
+            <div className="relative w-full">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Buscar por título o autor"
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                className="w-auto pl-10"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="overflow-y-auto max-h-[570px]">
-          {availableBooks.length === 0 ? (
+          {filteredBooks.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <div className="rounded-full bg-background/10 p-3">
                 <BookIcon className="h-10 w-10 text-muted-foreground" />
@@ -255,7 +272,7 @@ function AvailableBooks() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {availableBooks.map((book) => (
+              {filteredBooks.map((book) => (
                 <Card
                   key={book.id}
                   className="shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer md:p-4 p-2"
@@ -290,12 +307,12 @@ function AvailableBooks() {
             if (!open) setSelectedBook(null);
           }}
         >
-          <SheetContent>
+          <SheetContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl h-full md:h-auto overflow-auto">
             <SheetHeader>
               <SheetTitle>{selectedBook.title}</SheetTitle>
               <SheetDescription>{selectedBook.author}</SheetDescription>
             </SheetHeader>
-            <div>
+            <div className="overflow-auto">
               <img
                 src={selectedBook.imageUrl}
                 alt={selectedBook.title}

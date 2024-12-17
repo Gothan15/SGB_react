@@ -125,7 +125,7 @@ function AccountInfo() {
 
   if (loading || !userInfo) {
     return (
-      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
+      <Card className="border-transparent bg-transparent relative justify-center items-center flex min-h-auto">
         <CardContent>
           <LoadinSpinner />
         </CardContent>

@@ -63,7 +63,8 @@ const AddUserDialog = ({ onSuccess }) => {
       <DialogTrigger className="absolute right-[65px]" asChild>
         <Button size="sm">
           <UserPlus className="h-4 w-4" />
-          Agregar Nuevo Usuario
+          <span className="hidden md:inline">Agregar Nuevo Usuario</span>
+          <span className="md:hidden">Agregar</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

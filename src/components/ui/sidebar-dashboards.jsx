@@ -237,7 +237,7 @@ const Sidebar = ({
                   <BookmarkIcon className="mr-2 h-4 w-4" />
                   Futuras Lecturas
                 </h3>
-                <ScrollArea className="h-72 sm:h-[200px] md:h-60  lg:h-72 w-full rounded-md border p-2 sm:p-4">
+                <ScrollArea className="h-[200px] sm:h-[200px] md:h-60  lg:h-60 w-full rounded-md border p-2 sm:p-4">
                   {futureReadings.length > 0 ? (
                     futureReadings.map((reading) => (
                       <div key={reading.id} className="mb-4 last:mb-0">
@@ -278,9 +278,9 @@ const Sidebar = ({
                     backgroundColor: "#f0f0f0",
                   }}
                   whileTap={{ scale: 0.9 }}
-                  className="cursor-pointer rounded-full p-1 transition-colors duration-200 absolute right-0 top-3" // Añadido 'absolute right-0' para alinear a la derecha
+                  className="cursor-pointer rounded-full p-1 transition-colors duration-200 absolute right-16 lg:right-0 md:right-8 sm:right-10 top-3 block sm:block md:block"
                 >
-                  <EllipsisVertical className="w-6 h-6 sm:w-4 sm:h-4" />
+                  <EllipsisVertical className="w-6 h-6 sm:w-5   sm:h-5" />
                 </motion.div>
               </DropdownMenuTrigger>
               <motion.div
@@ -288,7 +288,7 @@ const Sidebar = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 mt-2" // Agregar posicionamiento absoluto
+                className="absolute right-16 lg:right-0 md:right-8 sm:right-10 mt-2" // Agregar posicionamiento absoluto
               >
                 <DropdownMenuContent className="w-56 bg-white border border-gray-200 rounded-md shadow-lg">
                   <DropdownMenuItem className="px-4 py-2 hover:bg-gray-100">

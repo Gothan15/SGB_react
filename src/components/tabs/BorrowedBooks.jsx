@@ -272,7 +272,7 @@ function BorrowedBooks() {
 
   if (loading) {
     return (
-      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
+      <Card className="border-transparent bg-transparent relative justify-center items-center flex min-h-auto  ">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>

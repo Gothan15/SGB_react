@@ -151,6 +151,27 @@ const AdminPage = () => {
   }, []);
 
   // Efectos optimizados
+  const checkSessionExpiration = useCallback(() => {
+    const intervalId = setInterval(() => {
+      const sessionStartTime = parseInt(
+        localStorage.getItem("sessionStartTime"),
+        10
+      );
+      const currentTime = Date.now();
+
+      if (currentTime - sessionStartTime >= SESSION_EXPIRATION_DURATION) {
+        clearInterval(intervalId);
+
+        localStorage.removeItem("sessionStartTime");
+        deleteDoc(doc(db, "activeSessions", auth.currentUser.uid));
+
+        setShowReauthDialog(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   useEffect(() => {
     const checkActiveSession = async (user) => {
       if (!user) return;
@@ -223,28 +244,7 @@ const AdminPage = () => {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
-
-  const checkSessionExpiration = useCallback(() => {
-    const intervalId = setInterval(() => {
-      const sessionStartTime = parseInt(
-        localStorage.getItem("sessionStartTime"),
-        10
-      );
-      const currentTime = Date.now();
-
-      if (currentTime - sessionStartTime >= SESSION_EXPIRATION_DURATION) {
-        clearInterval(intervalId);
-
-        localStorage.removeItem("sessionStartTime");
-        deleteDoc(doc(db, "activeSessions", auth.currentUser.uid));
-
-        setShowReauthDialog(true);
-      }
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, []);
+  }, [checkSessionExpiration, navigate]);
 
   useEffect(() => {
     const unsubscribers = [];
@@ -486,52 +486,22 @@ const AdminPage = () => {
           }}
         />
       )}
-      <div className="md:w-[1920px] min-h-screen md:mx-auto p-6 bg-black bg-opacity-30 backdrop-blur-sm">
-        <div className="flex justify-between items-center mb-6">
-          <div className="rounded-md shadow-md shadow-black">
+      <div className="w-full md:w-[1920px] min-h-screen mx-auto p-2 md:p-6 bg-black bg-opacity-30 backdrop-blur-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="w-full md:w-auto rounded-md shadow-md shadow-black">
             <PanelHeader
-              panelName="Panel de Administración de la Biblioteca"
+              panelName="Panel de Administración"
               locationName={IconLocation}
             />
           </div>
 
-          <div className="absolute left-[300px]  ml-4 rounded-md shadow-md shadow-black font-semibold  text-black ">
+          <div className="w-full md:absolute md:left-[300px] md:ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
             <WelcomeUser />
-          </div>
-
-          <div className="fixed bottom-6 right-6 z-50">
-            <button
-              className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
-                isFabOpen ? "rotate-45 scale-110" : ""
-              }`}
-              onClick={() => setIsFabOpen(!isFabOpen)}
-            >
-              {notifications.length > 0 && (
-                <Bubble
-                  className="absolute left-0 top-0 bg-red-500 text-white rounded-full p-1"
-                  count={notifications.length}
-                />
-              )}
-              {isFabOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-            <Sidebar
-              MenuName={"Opciones de Administrador"}
-              isOpen={isFabOpen}
-              onClose={() => setIsFabOpen(false)}
-              notifications={notifications}
-              setNotifications={setNotifications}
-              userProfile={userData.userProfile}
-              userInfo={userData.userInfo}
-            />
           </div>
         </div>
 
         <Tabs value={location.pathname.split("/").pop()} className="space-y-4">
-          <TabsList className="border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
+          <TabsList className=" overflow-x-auto flex-nowrap border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
             <TabsTrigger value="users" asChild>
               <NavLink
                 onClick={() => handleNavLinkClick("Usuarios")}
@@ -575,7 +545,7 @@ const AdminPage = () => {
             </TabsTrigger>
           </TabsList>
 
-          <div className="p-4">
+          <div className="p-2 md:p-4">
             <Outlet
               context={{
                 data,
@@ -588,6 +558,39 @@ const AdminPage = () => {
             />
           </div>
         </Tabs>
+
+        {/* Botón flotante y sidebar */}
+        <div className="fixed bottom-6 right-6 z-[9999]">
+          {" "}
+          {/* Cambiado el z-index y posición fija */}
+          <button
+            className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
+              isFabOpen ? "rotate-45 scale-110" : ""
+            }`}
+            onClick={() => setIsFabOpen(!isFabOpen)}
+          >
+            {notifications.length > 0 && (
+              <Bubble
+                className="absolute left-0 top-0 bg-red-500 text-white rounded-full p-1"
+                count={notifications.length}
+              />
+            )}
+            {isFabOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </button>
+          <Sidebar
+            MenuName={"Opciones de Administrador"}
+            isOpen={isFabOpen}
+            onClose={() => setIsFabOpen(false)}
+            notifications={notifications}
+            setNotifications={setNotifications}
+            userProfile={userData.userProfile}
+            userInfo={userData.userInfo}
+          />
+        </div>
       </div>
     </>
   );

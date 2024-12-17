@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 // Importación de hooks y componentes necesarios
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -16,7 +15,6 @@ import {
   orderBy,
   onSnapshot,
   getDocs,
-  deleteDoc,
   writeBatch,
   addDoc,
   serverTimestamp,
@@ -226,7 +224,7 @@ export default function ReservationHistory() {
 
   if (loading) {
     return (
-      <Card className="border-transparent bg-transparent absolute left-[860px] top-[380px] min-h-screen">
+      <Card className="border-transparent bg-transparent relative justify-center items-center flex min-h-auto">
         <CardContent className="flex justify-center items-center min-h-[300px]">
           <LoadinSpinner />
         </CardContent>
