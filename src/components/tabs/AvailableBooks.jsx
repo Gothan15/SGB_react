@@ -25,10 +25,11 @@ import {
   setDoc,
   Timestamp,
   deleteDoc,
+  getDoc,
 } from "firebase/firestore";
 import { db, auth } from "@/firebaseConfig";
 import { toast } from "sonner";
-import { BookIcon, SearchIcon } from "lucide-react"; // Añadir import de SearchIcon
+import { BookIcon, SearchIcon, XIcon, Loader2 } from "lucide-react"; // Añadir import de SearchIcon
 import BookReservationForm from "../dialogs/book-reservation-form";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import {
@@ -40,6 +41,12 @@ import {
 } from "@/components/ui/sheet";
 import { BookmarkIcon, BookmarkCheck } from "lucide-react";
 import { Input } from "@/components/ui/input"; // Añadir import de Input
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function AvailableBooks() {
   const [availableBooks, setAvailableBooks] = useState([]);
@@ -50,6 +57,7 @@ function AvailableBooks() {
   const [open, setOpen] = useState(false);
   const [futureReadingIds, setFutureReadingIds] = useState([]);
   const [filterQuery, setFilterQuery] = useState(""); // Reemplazar filterTitle y filterAuthor
+  const [isProcessingReservation, setIsProcessingReservation] = useState(false);
 
   useEffect(() => {
     const fetchAvailableBooks = async () => {
@@ -97,12 +105,37 @@ function AvailableBooks() {
   }, []);
 
   const handleReservation = async (book, onSuccess, selectedDate) => {
+    setIsProcessingReservation(true);
     if (!auth.currentUser) {
       toast.error("Usuario no autenticado");
       return;
     }
 
     try {
+      // Obtener el estado actual del libro desde la base de datos
+      const bookRef = doc(db, "books", book.id);
+      const bookDoc = await getDoc(bookRef);
+      const bookData = bookDoc.data();
+
+      if (bookData.status === "Prestado") {
+        toast.error("El libro ya está prestado y no puede ser reservado");
+        return;
+      }
+
+      // Verificar el número de libros prestados por el usuario
+      const borrowedBooksRef = collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "borrowedBooks"
+      );
+      const borrowedBooksSnapshot = await getDocs(borrowedBooksRef);
+
+      if (borrowedBooksSnapshot.size >= 6) {
+        toast.error("Has alcanzado el límite máximo de 6 libros prestados");
+        return;
+      }
+
       // Verificar si el usuario ya tiene una reserva activa para este libro
       const existingReservationsQuery = query(
         collection(db, "reservations"),
@@ -173,6 +206,10 @@ function AvailableBooks() {
         description: error.message,
       });
       console.error("Error:", error);
+    } finally {
+      setTimeout(() => {
+        setIsProcessingReservation(false);
+      }, 3000);
     }
   };
 
@@ -255,6 +292,14 @@ function AvailableBooks() {
                 className="w-auto pl-10"
               />
             </div>
+            {/* <Button
+              variant="secondary"
+              onClick={() => setFilterQuery("")}
+              className="text-sm flex items-center space-x-2 bg-gradient-to-r from-yellow-400 to-red-500 text-white hover:from-red-500 hover:to-yellow-400 transition-colors duration-300"
+            >
+              <XIcon className="h-4 w-4" />
+              <span>Limpiar</span>
+            </Button> */}
           </div>
         </CardHeader>
         <CardContent className="overflow-y-auto max-h-[570px]">
@@ -319,52 +364,81 @@ function AvailableBooks() {
                 className="w-full h-64 object-cover mb-4 rounded-lg shadow-lg"
               />
               <p className="text-justify text-gray-700 leading-relaxed mt-4 overflow-auto max-h-[500px] whitespace-pre-line ">
+                {"  "}
                 {selectedBook.description}
               </p>
               <div className="flex space-x-2 mt-4">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <BookIcon className="mr-2 h-4 w-4" />
-                      Reservar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogTitle>Reservar Libro</DialogTitle>
-                    <BookReservationForm
-                      book={selectedBook}
-                      onReserve={(selectedDate) => {
-                        handleReservation(
-                          selectedBook,
-                          () => setOpen(false),
-                          selectedDate
-                        );
-                      }}
-                    />
-                  </DialogContent>
-                </Dialog>
-                <Button
-                  className={
-                    futureReadingIds.includes(selectedBook.id)
-                      ? "bg-green-500 text-white font-semibold"
-                      : "bg-secondary text-black "
-                  }
-                  variant={
-                    futureReadingIds.includes(selectedBook.id)
-                      ? "primary"
-                      : "secondary"
-                  }
-                  onClick={() => handleToggleFutureList(selectedBook)}
-                >
-                  {futureReadingIds.includes(selectedBook.id) ? (
-                    <BookmarkCheck className="mr-2 h-4 w-4" />
-                  ) : (
-                    <BookmarkIcon className="mr-2 h-4 w-4" />
-                  )}
-                  {futureReadingIds.includes(selectedBook.id)
-                    ? "En futuras lecturas"
-                    : "Agregar a futuras lecturas"}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" disabled={isProcessingReservation}>
+                            {isProcessingReservation ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Procesando...
+                              </>
+                            ) : (
+                              <>
+                                <BookIcon className="mr-2 h-4 w-4" />
+                                Reservar
+                              </>
+                            )}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogTitle>Reservar Libro</DialogTitle>
+                          <BookReservationForm
+                            book={selectedBook}
+                            onReserve={(selectedDate) => {
+                              handleReservation(
+                                selectedBook,
+                                () => setOpen(false),
+                                selectedDate
+                              );
+                            }}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Realizar una reserva de este libro</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className={
+                          futureReadingIds.includes(selectedBook.id)
+                            ? "bg-green-500 text-white font-semibold"
+                            : "bg-secondary text-black "
+                        }
+                        variant={
+                          futureReadingIds.includes(selectedBook.id)
+                            ? "primary"
+                            : "secondary"
+                        }
+                        onClick={() => handleToggleFutureList(selectedBook)}
+                      >
+                        {futureReadingIds.includes(selectedBook.id) ? (
+                          <BookmarkCheck className="mr-2 h-4 w-4" />
+                        ) : (
+                          <BookmarkIcon className="mr-2 h-4 w-4" />
+                        )}
+                        {futureReadingIds.includes(selectedBook.id)
+                          ? "En futuras lecturas"
+                          : "Agregar a futuras lecturas"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Agregar o quitar de tu lista de lecturas futuras</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           </SheetContent>

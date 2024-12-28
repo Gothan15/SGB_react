@@ -3,8 +3,12 @@ import { DialogFooter } from "@/components/ui/dialog";
 import PropTypes from "prop-types";
 import { Timestamp } from "firebase/firestore";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function ReservationRenewalForm({ book, onRenew, onClose }) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
   // Determinar si el libro ya fue renovado
   const hasBeenRenewed = book.renewalCount && book.renewalCount >= 1;
 
@@ -18,13 +22,19 @@ export default function ReservationRenewalForm({ book, onRenew, onClose }) {
       return;
     }
 
+    setIsProcessing(true);
+
     const currentDate = book.dueDate.toDate();
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + 5);
     const newTimestamp = Timestamp.fromDate(newDate);
 
     onRenew(book.id, newTimestamp);
-    onClose();
+
+    setTimeout(() => {
+      setIsProcessing(false);
+      onClose();
+    }, 3000);
   };
 
   // Convertir el Timestamp a una fecha formateada
@@ -61,8 +71,15 @@ export default function ReservationRenewalForm({ book, onRenew, onClose }) {
         )}
       </div>
       <DialogFooter>
-        <Button type="submit" disabled={hasBeenRenewed}>
-          Confirmar Renovación
+        <Button type="submit" disabled={hasBeenRenewed || isProcessing}>
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Procesando...
+            </>
+          ) : (
+            "Confirmar Renovación"
+          )}
         </Button>
       </DialogFooter>
     </form>

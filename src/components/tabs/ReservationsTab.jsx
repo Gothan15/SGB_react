@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import { Badge } from "../ui/badge";
-//import { useState } from "react";
 import { toast } from "sonner";
 import {
   collection,
@@ -33,20 +32,21 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebaseConfig";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { Loader2 } from "lucide-react";
 
 const ReservationsTab = () => {
-  const {
-    data,
-    //handleApproveReservation, handleRejectReservation
-  } = useOutletContext();
+  const { data } = useOutletContext();
+
+  const [processingReservationId, setProcessingReservationId] = useState(null);
 
   useEffect(() => {
     console.log("Reservaciones pendientes:", data?.pendingReservations);
   }, [data?.pendingReservations]);
 
   const handleApproveReservation = async (reservationId, bookId, userId) => {
+    setProcessingReservationId(reservationId);
     try {
       const batch = writeBatch(db);
       const reservationRef = doc(db, "reservations", reservationId);
@@ -188,10 +188,15 @@ const ReservationsTab = () => {
         duration: 3000,
         description: error.message,
       });
+    } finally {
+      setTimeout(() => {
+        setProcessingReservationId(null);
+      }, 3000);
     }
   };
 
   const handleRejectReservation = async (reservationId, userId, bookId) => {
+    setProcessingReservationId(reservationId);
     try {
       const batch = writeBatch(db);
       const reservationRef = doc(db, "reservations", reservationId);
@@ -273,6 +278,10 @@ const ReservationsTab = () => {
         duration: 3000,
         description: error.message,
       });
+    } finally {
+      setTimeout(() => {
+        setProcessingReservationId(null);
+      }, 3000);
     }
   };
 
@@ -382,7 +391,6 @@ const ReservationsTab = () => {
                       {reservation.status === "Pendiente" && (
                         <div className="flex space-x-2">
                           {index === 0 ? (
-                            // Botones habilitados para la primera solicitud
                             <>
                               <Button
                                 onClick={() =>
@@ -393,8 +401,17 @@ const ReservationsTab = () => {
                                   )
                                 }
                                 className="bg-green-500 hover:bg-green-700"
+                                disabled={
+                                  processingReservationId === reservation.id
+                                }
                               >
-                                Aprobar
+                                {processingReservationId === reservation.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  </>
+                                ) : (
+                                  "Aprobar"
+                                )}
                               </Button>
                               <Button
                                 onClick={() =>
@@ -405,12 +422,20 @@ const ReservationsTab = () => {
                                   )
                                 }
                                 className="bg-red-500 hover:bg-red-700"
+                                disabled={
+                                  processingReservationId === reservation.id
+                                }
                               >
-                                Rechazar
+                                {processingReservationId === reservation.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  </>
+                                ) : (
+                                  "Rechazar"
+                                )}
                               </Button>
                             </>
                           ) : (
-                            // Botones deshabilitados para el resto de solicitudes
                             <>
                               <Button disabled className="bg-gray-400">
                                 Aprobar

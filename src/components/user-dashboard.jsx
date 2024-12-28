@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 "use client";
 
 // Firebase imports
@@ -28,7 +27,7 @@ import { useRef, useCallback } from "react";
 import ChatButton from "./ui/ChatButton";
 import UserContext from "./UserContext";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import React, { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import { db } from "@/firebaseConfig";
 import ForcePasswordChangeDialog from "./dialogs/ForcePasswordChangeDialog";

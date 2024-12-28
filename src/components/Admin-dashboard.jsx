@@ -1,14 +1,7 @@
-/* eslint-disable no-unused-vars */
 // Importaciones de React
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation, NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
-  Trash2 as TrashIcon2,
-  MessageSquare,
-  UserIcon,
-  X,
-  Menu,
-} from "lucide-react";
+import { MessageSquare, UserIcon, X, Menu } from "lucide-react";
 // Importaciones externas
 import { toast } from "sonner";
 import {
@@ -19,7 +12,6 @@ import {
   onSnapshot,
   getDoc,
   getDocs,
-  writeBatch,
   orderBy,
   setDoc,
   deleteDoc,
@@ -41,7 +33,6 @@ import {
   SESSION_TIMEOUT_DURATION,
   SESSION_EXPIRATION_DURATION,
 } from "../firebaseConfig";
-import { functions } from "@/firebaseConfig";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

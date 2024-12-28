@@ -47,6 +47,12 @@ import { toast } from "sonner";
 import LoadinSpinner from "../ui/LoadinSpinner";
 import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 function BorrowedBooks() {
   const [borrowedBooks, setBorrowedBooks] = useState([]);
@@ -342,48 +348,58 @@ function BorrowedBooks() {
                             : "Fecha no disponible"}
                         </TableCell>
                         <TableCell>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                className="w-full md:w-auto"
-                              >
-                                <X className="mr-2 h-4 w-4" />
-                                Cancelar
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Cancelar Reserva</DialogTitle>
-                                <DialogDescription>
-                                  ¿Estás seguro de que deseas cancelar esta
-                                  reserva?
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="flex justify-end space-x-2">
-                                <DialogTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className="w-full md:w-auto"
-                                  >
-                                    No
-                                  </Button>
-                                </DialogTrigger>
-                                <Button
-                                  className="hover:bg-gradient-to-l hover:border-black hover:font-semibold from-red-700 transition-colors duration-200 to-black w-full md:w-auto"
-                                  onClick={() =>
-                                    handleCancelReservation(
-                                      reservation.id,
-                                      reservation.bookTitle
-                                    )
-                                  }
-                                >
-                                  Sí, cancelar
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="w-full md:w-auto"
+                                    >
+                                      <X className="mr-2 h-4 w-4" />
+                                      Cancelar
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>
+                                        Cancelar Reserva
+                                      </DialogTitle>
+                                      <DialogDescription>
+                                        ¿Estás seguro de que deseas cancelar
+                                        esta reserva?
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="flex justify-end space-x-2">
+                                      <Button
+                                        variant="outline"
+                                        className="w-full md:w-auto"
+                                        onClick={(e) => e.preventDefault()}
+                                      >
+                                        No
+                                      </Button>
+                                      <Button
+                                        className="hover:bg-gradient-to-l hover:border-black hover:font-semibold from-red-700 transition-colors duration-200 to-black w-full md:w-auto"
+                                        onClick={() =>
+                                          handleCancelReservation(
+                                            reservation.id,
+                                            reservation.bookTitle
+                                          )
+                                        }
+                                      >
+                                        Sí, cancelar
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Cancelar la reserva pendiente</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -425,48 +441,79 @@ function BorrowedBooks() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button className="w-full md:w-auto" size="sm">
-                                  <RefreshCw className="mr-2 h-4 w-4" />
-                                  Renovar
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Renovar Préstamo</DialogTitle>
-                                  <DialogDescription>
-                                    ¿Estás seguro de que deseas renovar el
-                                    préstamo de este libro?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <ReservationRenewalForm
-                                  book={book}
-                                  onRenew={handleRenewal}
-                                  onClose={() => setShowRenewalDialog(false)}
-                                />
-                              </DialogContent>
-                            </Dialog>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button className="w-full md:w-auto" size="sm">
-                                  <ArrowLeftRight className="mr-2 h-4 w-4" />
-                                  Devolver
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Devolver Libro</DialogTitle>
-                                  <DialogDescription>
-                                    Confirma la devolución del libro.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <BookReturnForm
-                                  book={book}
-                                  onReturn={handleReturn}
-                                />
-                              </DialogContent>
-                            </Dialog>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        className="w-full md:w-auto"
+                                        size="sm"
+                                      >
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        Renovar
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>
+                                          Renovar Préstamo
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          ¿Estás seguro de que deseas renovar el
+                                          préstamo de este libro?
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <ReservationRenewalForm
+                                        book={book}
+                                        onRenew={handleRenewal}
+                                        onClose={() =>
+                                          setShowRenewalDialog(false)
+                                        }
+                                      />
+                                    </DialogContent>
+                                  </Dialog>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Renovar el período de préstamo</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        className="w-full md:w-auto"
+                                        size="sm"
+                                      >
+                                        <ArrowLeftRight className="mr-2 h-4 w-4" />
+                                        Devolver
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>
+                                          Devolver Libro
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          Confirma la devolución del libro.
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <BookReturnForm
+                                        book={book}
+                                        onReturn={handleReturn}
+                                      />
+                                    </DialogContent>
+                                  </Dialog>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Devolver el libro a la biblioteca</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                         </TableCell>
                       </TableRow>

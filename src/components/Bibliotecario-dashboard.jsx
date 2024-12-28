@@ -1,14 +1,7 @@
-/* eslint-disable no-unused-vars */
 // Importaciones de React
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation, NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
-  Trash2 as TrashIcon2,
-  MessageSquare,
-  UserIcon,
-  Menu,
-  X,
-} from "lucide-react";
+import { UserIcon, Menu, X } from "lucide-react";
 // Importaciones externas
 import { toast } from "sonner";
 import {
@@ -19,7 +12,6 @@ import {
   onSnapshot,
   getDoc,
   getDocs,
-  writeBatch,
   orderBy,
   setDoc,
   deleteDoc,
@@ -27,13 +19,11 @@ import {
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { flexRender } from "@tanstack/react-table";
 import {
-  UsersIcon,
   CalendarIcon,
   BookIcon,
   ChevronsUpDown,
   ChevronUp,
   ChevronDown,
-  BarChart,
 } from "lucide-react";
 
 // Importaciones internas
