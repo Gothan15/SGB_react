@@ -47,6 +47,31 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { motion } from "framer-motion";
+import { Search, Heart, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// const categories = [
+//   { icon: "📚", label: "Todos" },
+//   { icon: "🎭", label: "Drama" },
+//   { icon: "🔍", label: "Misterio" },
+//   { icon: "💕", label: "Romance" },
+//   { icon: "🚀", label: "Sci-Fi" },
+//   { icon: "🎨", label: "Arte" },
+//   { icon: "📖", label: "Historia" },
+//   { icon: "🎬", label: "Biografías" },
+//   { icon: "🌍", label: "Viajes" },
+//   { icon: "👔", label: "Negocios" },
+//   { icon: "🧠", label: "Psicología" },
+//   { icon: "📱", label: "Tecnología" },
+// ];
 
 function AvailableBooks() {
   const [availableBooks, setAvailableBooks] = useState([]);
@@ -58,6 +83,10 @@ function AvailableBooks() {
   const [futureReadingIds, setFutureReadingIds] = useState([]);
   const [filterQuery, setFilterQuery] = useState(""); // Reemplazar filterTitle y filterAuthor
   const [isProcessingReservation, setIsProcessingReservation] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [favorites, setFavorites] = useState([]);
+  const [booksPerPage, setBooksPerPage] = useState(8);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchAvailableBooks = async () => {
@@ -263,86 +292,234 @@ function AvailableBooks() {
     );
   });
 
-  if (loading) {
-    return (
-      <Card className="border-transparent bg-transparent relative justify-center items-center flex min-h-auto">
-        <CardContent className="flex justify-center items-center min-h-[300px]">
-          <LoadinSpinner />
-        </CardContent>
-      </Card>
+  const toggleFavorite = (bookId) => {
+    setFavorites((prev) =>
+      prev.includes(bookId)
+        ? prev.filter((id) => id !== bookId)
+        : [...prev, bookId]
     );
-  }
+    toast.success("Lista de favoritos actualizada");
+  };
+
+  // Calcular índices para paginación
+  const indexOfLastBook = currentPage * booksPerPage;
+  const indexOfFirstBook = indexOfLastBook - booksPerPage;
+  const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 },
+  };
+
+  if (loading) return <LoadinSpinner />;
 
   return (
-    <div>
-      <Card className="bg-gradient-to-br from-white to-gray-200 shadow-lg backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Libros Disponibles</CardTitle>
-          <CardDescription>
-            Explora y reserva libros disponibles en nuestra biblioteca.
-          </CardDescription>
-          <div className="flex items-center space-x-2 mt-4">
-            <div className="relative w-full">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+    <div className="h-[calc(100vh-285px)] bg-gradient-to-b from-white to-gray-100 overflow-hidden">
+      {/* Search and Categories Container */}
+      <div className="h-[100px]">
+        {/* Search Bar */}
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b shadow-sm">
+          <div className="container mx-auto px-4 py-4">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <Input
                 type="text"
                 placeholder="Buscar por título o autor"
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
-                className="w-auto pl-10"
+                className="pl-10 h-12 text-lg bg-white border-gray-300 rounded-full focus:border-blue-600 focus:ring-blue-600 text-gray-900 placeholder-gray-500"
               />
             </div>
-            {/* <Button
-              variant="secondary"
-              onClick={() => setFilterQuery("")}
-              className="text-sm flex items-center space-x-2 bg-gradient-to-r from-yellow-400 to-red-500 text-white hover:from-red-500 hover:to-yellow-400 transition-colors duration-300"
-            >
-              <XIcon className="h-4 w-4" />
-              <span>Limpiar</span>
-            </Button> */}
           </div>
-        </CardHeader>
-        <CardContent className="overflow-y-auto max-h-[570px]">
-          {filteredBooks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <div className="rounded-full bg-background/10 p-3">
-                <BookIcon className="h-10 w-10 text-muted-foreground" />
+        </div>
+
+        {/* Categories */}
+        {/* <div className="border-b bg-white/50">
+          <div className="container mx-auto px-4">
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex w-max space-x-4 p-4">
+                {categories.map((category) => (
+                  <Button
+                    key={category.label}
+                    variant="ghost"
+                    className={`flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-colors
+                    ${
+                      selectedCategory === category.label
+                        ? "bg-gray-900 text-white hover:bg-gray-800"
+                        : "hover:bg-gray-100"
+                    }`}
+                    onClick={() => setSelectedCategory(category.label)}
+                  >
+                    <span>{category.icon}</span>
+                    <span>{category.label}</span>
+                  </Button>
+                ))}
               </div>
-              <h3 className="mt-4 text-lg font-semibold">
-                No hay libros disponibles
-              </h3>
-              <p className="mb-4 mt-2 text-sm text-muted-foreground">
-                No se encontraron libros disponibles para reservar.
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+        </div> */}
+      </div>
+
+      {/* Main Content Area with Fixed Height */}
+      <div className="h-[calc(100%-100px)] overflow-y-auto">
+        {/* Controles de visualización */}
+        <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-medium text-gray-700">
+                Mostrando {indexOfFirstBook + 1}-
+                {Math.min(indexOfLastBook, filteredBooks.length)} de{" "}
+                {filteredBooks.length} libros
               </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredBooks.map((book) => (
-                <Card
-                  key={book.id}
-                  className="shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer md:p-4 p-2"
+              <div className="flex items-center gap-4">
+                <Select
+                  value={booksPerPage.toString()}
+                  onValueChange={(value) => {
+                    setBooksPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
                 >
-                  <CardHeader className=" p-0">
+                  <SelectTrigger className="w-[180px] bg-white text-gray-900">
+                    <SelectValue placeholder="Libros por página" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[8, 16, 32, 64].map((number) => (
+                      <SelectItem key={number} value={number.toString()}>
+                        {number} libros por página
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Books Grid with Scrollable Container */}
+        <div className="container mx-auto px-4 py-4">
+          {currentBooks.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-8"
+            >
+              <p className="text-gray-700 font-medium text-lg">
+                No se encontraron libros disponibles
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-max"
+            >
+              {currentBooks.map((book) => (
+                <motion.div
+                  key={book.id}
+                  variants={item}
+                  whileHover={{ scale: 1.03 }}
+                  className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-t-xl">
                     <img
                       src={book.imageUrl}
                       alt={book.title}
-                      className="w-full h-48 object-cover rounded-lg md:h-64"
+                      className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                       onClick={() => {
                         setSelectedBook(book);
                         setOpen(true);
                       }}
                     />
-                  </CardHeader>
-                  <CardContent>
-                    <CardTitle>{book.title}</CardTitle>
-                    <CardDescription>{book.author}</CardDescription>
-                  </CardContent>
-                </Card>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      className="absolute right-3 top-3"
+                    >
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-md"
+                        onClick={() => handleToggleFutureList(book)}
+                      >
+                        {futureReadingIds.includes(book.id) ? (
+                          <BookmarkCheck className="fill-green-600 text-green-600" />
+                        ) : (
+                          <BookmarkIcon className="text-gray-700" />
+                        )}
+                      </Button>
+                    </motion.div>
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 line-clamp-1 text-lg">
+                      {book.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 line-clamp-1 mt-1">
+                      {book.author}
+                    </p>
+                  </div>
+                </motion.div>
               ))}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Pagination at bottom */}
+        <div className="sticky bottom-0 bg-white/90 backdrop-blur-sm py-4">
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 pb-8">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="text-gray-700 border-gray-300 hover:bg-gray-100"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 ${
+                        currentPage === page
+                          ? "bg-black text-white hover:bg-black"
+                          : "text-gray-700 border-gray-300 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="text-gray-700 border-gray-300 hover:bg-gray-100"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {selectedBook && (
         <Sheet
@@ -352,18 +529,22 @@ function AvailableBooks() {
             if (!open) setSelectedBook(null);
           }}
         >
-          <SheetContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl h-full md:h-auto overflow-auto">
+          <SheetContent className="w-full max-w-lg sm:max-w-xl md:max-w-2xl lg:max-w-3xl h-full md:h-auto overflow-auto bg-white">
             <SheetHeader>
-              <SheetTitle>{selectedBook.title}</SheetTitle>
-              <SheetDescription>{selectedBook.author}</SheetDescription>
+              <SheetTitle className="text-2xl font-bold text-gray-900">
+                {selectedBook.title}
+              </SheetTitle>
+              <SheetDescription className="text-gray-600 text-lg">
+                {selectedBook.author}
+              </SheetDescription>
             </SheetHeader>
-            <div className="overflow-auto">
+            <div className="overflow-auto mt-6">
               <img
                 src={selectedBook.imageUrl}
                 alt={selectedBook.title}
-                className="w-full h-64 object-cover mb-4 rounded-lg shadow-lg"
+                className="w-full h-64 object-cover mb-6 rounded-lg shadow-lg"
               />
-              <p className="text-justify text-gray-700 leading-relaxed mt-4 overflow-auto max-h-[500px] whitespace-pre-line ">
+              <p className="text-justify text-gray-700 leading-relaxed whitespace-pre-line text-base">
                 {"  "}
                 {selectedBook.description}
               </p>

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 const withMT = require("@material-tailwind/react/utils/withMT");
+const plugin = require("tailwindcss/plugin"); // Añadir esta línea
 
 module.exports = withMT({
   darkMode: ["class", "class"], // Esto permite cambiar entre temas usando la clase 'dark'
@@ -163,7 +164,40 @@ module.exports = withMT({
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      transformStyle: {
+        "preserve-3d": "preserve-3d",
+      },
+      perspective: {
+        1000: "1000px",
+      },
+      rotate: {
+        "y-180": "rotateY(180deg)",
+      },
+      backfaceVisibility: {
+        hidden: "hidden",
+      },
+      transitionDuration: {
+        1000: "1000ms",
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        ".backface-hidden": {
+          "backface-visibility": "hidden",
+        },
+        ".perspective-1000": {
+          perspective: "1000px",
+        },
+        ".transform-style-preserve-3d": {
+          "transform-style": "preserve-3d",
+        },
+        ".rotate-y-180": {
+          transform: "rotateY(180deg)",
+        },
+      });
+    }),
+  ],
 });
