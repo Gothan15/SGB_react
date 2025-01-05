@@ -76,6 +76,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/register" element={<Register />} />
               <Route path="/reset-password" element={<PasswordResetForm />} />
+              <Route path="/null" element={<routes.null />} />
 
               {/* Rutas protegidas */}
               <Route

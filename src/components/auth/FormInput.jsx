@@ -41,7 +41,7 @@ const FormInput = ({
       <Icon className="absolute text-white right-[5px] top-[5px] transform text-2xl" />
     )}
     {showPasswordToggle && (
-      <div className="absolute right-[50px] top-[5px] flex gap-2">
+      <div className="absolute text-white right-[5px] top-[5px] transform text-2xl flex gap-2">
         <button
           type="button"
           onClick={togglePassword}
