@@ -39,7 +39,7 @@ const PasswordResetForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-center bg-cover">
+    <div className="min-h-screen absolute right-10 sm:right-[100px] md:right-[200px] lg:right-[200px] xl:right-[700px] flex items-center justify-center bg-center bg-cover">
       <div className="w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8 p-8 space-y-8 rounded-md bg-[#000000] bg-opacity-50 shadow-black shadow-lg backdrop-blur-sm">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold">Restablecer Contraseña</h1>

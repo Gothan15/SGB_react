@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 "use client";
 
 // Firebase imports
@@ -28,13 +27,14 @@ import { useRef, useCallback } from "react";
 import ChatButton from "./ui/ChatButton";
 import UserContext from "./UserContext";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import React, { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import { db } from "@/firebaseConfig";
 import ForcePasswordChangeDialog from "./dialogs/ForcePasswordChangeDialog";
 import PasswordExpirationCheck from "./auth/PasswordExpirationCheck";
 
 // UI Components imports
+import { AnimatePresence, motion } from "framer-motion";
 import {
   BookOpenIcon,
   CalendarIcon,
@@ -51,11 +51,35 @@ import PanelHeader from "./ui/panel-header";
 import Sidebar from "./ui/sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 import ReauthDialog from "./ui/ReauthDialog";
+//import FunFacts from "./ui/FunFacts";
 
 const UserDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [IconLocation, seticonLocation] = useState("Libros Reservados");
+
+  const getLocationName = (pathname) => {
+    const route = pathname.split("/").pop();
+    switch (route) {
+      case "available":
+        return "Libros Disponibles";
+      case "borrowed":
+        return "Libros Reservados";
+      case "reservations":
+        return "Historial de Reservas";
+      case "account":
+        return "Mi Cuenta";
+      default:
+        return "Libros Disponibles";
+    }
+  };
+
+  const [locationName, setLocationName] = useState(
+    getLocationName(location.pathname)
+  );
+
+  useEffect(() => {
+    setLocationName(getLocationName(location.pathname));
+  }, [location.pathname]);
 
   // Estados principales
   const [userData, setUserData] = useState({
@@ -339,112 +363,166 @@ const UserDashboard = () => {
       <UserContext.Provider value={{ userData, loading }}>
         <div className="md:w-full w-full min-h-screen mx-auto p-4 bg-black bg-opacity-30 backdrop-blur-sm">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-            <div className="rounded-md shadow-md shadow-black">
+            <div className="rounded-md shadow-md shadow-black w-[60%]">
               <PanelHeader
                 panelName="Panel de Usuario"
-                locationName={IconLocation}
+                locationName={locationName}
               />
             </div>
-
-            <div className="absolute left-4 md:left-[300px] ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
-              <WelcomeUser
-                userProfile={userData.userProfile}
-                userInfo={userData.userInfo}
-              />
-            </div>
-
-            <div className="fixed bottom-6 right-6 z-[9999]">
-              <button
-                className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
-                  isFabOpen ? "rotate-45 scale-110" : ""
-                }`}
-                onClick={() => setIsFabOpen(!isFabOpen)}
-              >
-                {notifications.length > 0 && (
-                  <Bubble
-                    className="absolute left-0 top-0 bg-red-500 text-white rounded-full p-1"
-                    count={notifications.length}
-                  />
-                )}
-                {isFabOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </button>
-              <Sidebar
-                MenuName={"Opciones de Usuario"}
-                isOpen={isFabOpen}
-                onClose={() => setIsFabOpen(false)}
-                notifications={notifications}
-                setNotifications={setNotifications}
-                userProfile={userData.userProfile}
-                userInfo={userData.userInfo}
-                passwordStatus={passwordStatus} // Pasar el estado de la contraseña
-              />
-            </div>
+            {/* <div className="w-[30%] h-[30%] md:w-[30%] md:h-[10%]">
+              <FunFacts />
+            </div> */}
           </div>
 
-          {/* <div className="absolute right-6 top-[83px]">
-          <LogoutDrawer />
-        </div> */}
+          <div className="absolute left-4 md:left-[300px] ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
+            <WelcomeUser
+              userProfile={userData.userProfile}
+              userInfo={userData.userInfo}
+            />
+          </div>
 
-          <Tabs
-            value={location.pathname.split("/").pop()}
-            className="space-y-4"
+          <div className="fixed bottom-6 right-6 z-[9999]">
+            <button
+              className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
+                isFabOpen ? "rotate-45 scale-110" : ""
+              }`}
+              onClick={() => setIsFabOpen(!isFabOpen)}
+            >
+              {notifications.length > 0 && (
+                <Bubble
+                  className="absolute left-0 top-0 bg-red-500 text-white rounded-full p-1"
+                  count={notifications.length}
+                />
+              )}
+              {isFabOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+            <Sidebar
+              MenuName={"Opciones de Usuario"}
+              isOpen={isFabOpen}
+              onClose={() => setIsFabOpen(false)}
+              notifications={notifications}
+              setNotifications={setNotifications}
+              userProfile={userData.userProfile}
+              userInfo={userData.userInfo}
+              passwordStatus={passwordStatus} // Pasar el estado de la contraseña
+            />
+          </div>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="bg-transparent bg-opacity-70 backdrop-blur-md shadow-lg rounded-md p-4"
           >
-            <TabsList className=" border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black sm:w-auto overflow-x-auto">
-              <TabsTrigger value="available" asChild className=" md:w-auto">
-                <NavLink
-                  onClick={() => seticonLocation("Libros Disponibles")}
-                  to="available"
-                  className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
-                >
-                  <BookIcon className="mr-2 h-4 w-4" />
-                  <span className="hidden md:inline">Libros Disponibles</span>
-                  <span className="md:hidden">Disp.</span>
-                </NavLink>
-              </TabsTrigger>
-              <TabsTrigger value="borrowed" asChild className=" md:w-auto">
-                <NavLink
-                  onClick={() => seticonLocation("Libros Reservados")}
-                  to="borrowed"
-                  className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
-                >
-                  <BookOpenIcon className="mr-2 h-4 w-4" />
-                  <span className="hidden md:inline">Libros Reservados</span>
-                  <span className="md:hidden">Reserv.</span>
-                </NavLink>
-              </TabsTrigger>
-              <TabsTrigger value="reservations" asChild className=" md:w-auto">
-                <NavLink
-                  onClick={() => seticonLocation("Historial de Reservas")}
-                  to="reservations"
-                  className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  <span className="hidden md:inline">
-                    Historial de Reservas
-                  </span>
-                  <span className="md:hidden">Historial</span>
-                </NavLink>
-              </TabsTrigger>
-              <TabsTrigger value="account" asChild className=" md:w-auto">
-                <NavLink
-                  onClick={() => seticonLocation("Mi Cuenta")}
-                  to="account"
-                  className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
-                >
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  Mi Cuenta
-                </NavLink>
-              </TabsTrigger>
-            </TabsList>
+            <Tabs
+              value={location.pathname.split("/").pop()}
+              className="space-y-4"
+            >
+              <TabsList className="inline-flex p-1 bg-white/50 backdrop-blur-md shadow-lg rounded-full ">
+                <AnimatePresence>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <TabsTrigger value="available" asChild>
+                      <NavLink
+                        to="available"
+                        className={({ isActive }) =>
+                          `flex items-center px-4 py-2 rounded-full transition-all ${
+                            isActive
+                              ? "bg-black text-white shadow-md"
+                              : "hover:bg-gray-100"
+                          }`
+                        }
+                      >
+                        <BookIcon className="mr-2 h-4 w-4" />
+                        <span className="hidden md:inline">
+                          Libros Disponibles
+                        </span>
+                        <span className="md:hidden">Disp.</span>
+                      </NavLink>
+                    </TabsTrigger>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <TabsTrigger value="borrowed" asChild>
+                      <NavLink
+                        to="borrowed"
+                        className={({ isActive }) =>
+                          `flex items-center px-4 py-2 rounded-full transition-all ${
+                            isActive
+                              ? "bg-black text-white shadow-md"
+                              : "hover:bg-gray-100"
+                          }`
+                        }
+                      >
+                        <BookOpenIcon className="mr-2 h-4 w-4" />
+                        <span className="hidden md:inline">
+                          Libros Reservados
+                        </span>
+                        <span className="md:hidden">Reserv.</span>
+                      </NavLink>
+                    </TabsTrigger>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <TabsTrigger value="reservations" asChild>
+                      <NavLink
+                        to="reservations"
+                        className={({ isActive }) =>
+                          `flex items-center px-4 py-2 rounded-full transition-all ${
+                            isActive
+                              ? "bg-black text-white shadow-md"
+                              : "hover:bg-gray-100"
+                          }`
+                        }
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        <span className="hidden md:inline">
+                          Historial de Reservas
+                        </span>
+                        <span className="md:hidden">Historial</span>
+                      </NavLink>
+                    </TabsTrigger>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <TabsTrigger value="account" asChild>
+                      <NavLink
+                        to="account"
+                        className={({ isActive }) =>
+                          `flex items-center px-4 py-2 rounded-full transition-all ${
+                            isActive
+                              ? "bg-black text-white shadow-md"
+                              : "hover:bg-gray-100"
+                          }`
+                        }
+                      >
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        Mi Cuenta
+                      </NavLink>
+                    </TabsTrigger>
+                  </motion.div>
+                </AnimatePresence>
+              </TabsList>
 
-            <div className="p-2 md:p-4">
-              <Outlet />
-            </div>
-          </Tabs>
+              <div className="p-2 md:p-4">
+                <Outlet />
+              </div>
+            </Tabs>
+          </motion.div>
+          {/* <footer className="absolute bottom-0   p-4 text-center text-white bg-blue-800">
+            &copy; 2025 Biblioteca Digital. Todos los derechos reservados.
+          </footer> */}
           <ChatButton />
         </div>
       </UserContext.Provider>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import {
   Dialog,
   DialogContent,
@@ -234,5 +235,10 @@ function ChangePasswordDialog({ isOpen, onOpenChange, triggerButton }) {
     </Dialog>
   );
 }
+ChangePasswordDialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onOpenChange: PropTypes.func.isRequired,
+  triggerButton: PropTypes.node,
+};
 
 export default ChangePasswordDialog;

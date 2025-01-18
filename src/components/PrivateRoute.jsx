@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "./ui/LoadingScreen";
-import { auth } from "@/firebaseConfig";
+import { auth, db } from "@/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 const PrivateRoute = ({ userRole, requiredRole, children }) => {
   const [isVerifying, setIsVerifying] = useState(true);
@@ -13,36 +14,36 @@ const PrivateRoute = ({ userRole, requiredRole, children }) => {
     console.log(`👤 Rol de usuario actual: ${userRole}`);
     console.log(`🎯 Rol requerido: ${requiredRole}`);
 
-    const timer = setTimeout(() => {
-      console.log("⏱️ Temporizador de verificación completado");
-      setIsVerifying(false);
-
+    const verifyUserRole = async () => {
       if (!auth.currentUser) {
         console.log("❌ Usuario no autenticado, redirigiendo a registro");
         navigate("/register", { replace: true });
-      } else {
-        console.log("✅ Usuario autenticado:", auth.currentUser.email);
+        return;
       }
-    }, 100);
 
-    return () => {
-      console.log("🧹 Limpiando temporizador");
-      clearTimeout(timer);
+      const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+      if (userDoc.exists()) {
+        const role = userDoc.data().role;
+        if (role !== requiredRole) {
+          console.log("🚫 Acceso denegado - Redirigiendo según rol");
+          navigate(`/${role}`, { replace: true });
+        } else {
+          setIsVerifying(false);
+        }
+      } else {
+        console.log(
+          "❌ Usuario no encontrado en Firestore, redirigiendo a registro"
+        );
+        navigate("/register", { replace: true });
+      }
     };
+
+    verifyUserRole();
   }, [userRole, navigate, requiredRole]);
 
   if (isVerifying) {
     console.log("⌛ Mostrando pantalla de carga...");
     return <LoadingScreen />;
-  }
-
-  if (!auth.currentUser) {
-    console.log("🚫 Acceso denegado - Redirigiendo a registro");
-    return <Navigate to="/register" replace />;
-  }
-
-  if (userRole !== requiredRole) {
-    return <Navigate to={`/${userRole}`} replace />;
   }
 
   return children;

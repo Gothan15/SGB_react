@@ -26,6 +26,7 @@ import {
   BASE_LOCK_DURATION,
   MAX_LOCK_MULTIPLIER,
   PASSWORD_CONFIG,
+  functions,
 } from "@/firebaseConfig";
 
 // Iconos
@@ -44,6 +45,7 @@ import SocialLoginButtons from "./SocialLoginButtons";
 import useForm from "@/hooks/useForm";
 import FormInput from "./FormInput";
 import validatePassword from "./validatePassword"; // Importar validatePassword
+import { httpsCallable } from "firebase/functions";
 
 const RegisterForm = ({
   uiState,
@@ -55,13 +57,16 @@ const RegisterForm = ({
   remainingTime,
   setRemainingTime,
 }) => {
-  const initialFormData = {
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "student",
-    name: "",
-  };
+  const initialFormData = React.useMemo(
+    () => ({
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "student",
+      name: "",
+    }),
+    []
+  );
 
   const { formData, handleSubmit, setFormData } = useForm(
     initialFormData,
@@ -132,7 +137,7 @@ const RegisterForm = ({
       message: "",
       color: "",
     });
-  }, [setFormData]);
+  }, [initialFormData, setFormData]);
 
   // Maneja el registro de un nuevo usuario
   const handleRegister = useCallback(
@@ -226,6 +231,73 @@ const RegisterForm = ({
       e.preventDefault();
       setUiState((prev) => ({ ...prev, loading: true }));
 
+      // Obtener IP del usuario
+      const ipResponse = await fetch("https://api.ipify.org?format=json");
+      const { ip } = await ipResponse.json();
+
+      // Verificar intentos de la IP
+      const checkIpAttempts = httpsCallable(functions, "checkIpAttempts");
+      const { data } = await checkIpAttempts({ ip });
+
+      if (data.blocked) {
+        navigate("/blocked");
+        return;
+      }
+
+      const updateLoginAttempts = async (email, success) => {
+        try {
+          const userRef = doc(db, "loginAttempts", email);
+          const userDoc = await getDoc(userRef);
+          const data = userDoc.exists()
+            ? userDoc.data()
+            : { attempts: 0, lockCount: 0 };
+
+          if (success) {
+            await setDoc(userRef, {
+              attempts: 0,
+              lockedUntil: null,
+              lockCount: 0,
+            });
+            setIsLocked(false);
+            setLockExpiration(null);
+          } else {
+            const newAttempts = data.attempts + 1;
+
+            if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+              const newLockCount = (data.lockCount || 0) + 1;
+              const multiplier = Math.min(newLockCount, MAX_LOCK_MULTIPLIER);
+              const lockDuration = BASE_LOCK_DURATION * multiplier;
+              const lockExpiration = new Date().getTime() + lockDuration;
+
+              await setDoc(userRef, {
+                attempts: newAttempts,
+                lockedUntil: lockExpiration,
+                lockCount: newLockCount,
+              });
+
+              setIsLocked(true);
+              setLockExpiration(lockExpiration);
+
+              const minutes = Math.ceil(lockDuration / 1000 / 60);
+              toast.error("Cuenta bloqueada temporalmente", {
+                description: `Demasiados intentos fallidos. Intente nuevamente en ${minutes} minutos.`,
+              });
+            } else {
+              await setDoc(userRef, {
+                ...data,
+                attempts: newAttempts,
+                lockedUntil: null,
+              });
+              toast.error(
+                `Intento fallido ${newAttempts} de ${MAX_LOGIN_ATTEMPTS}`
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error updating login attempts:", error);
+        }
+      };
+
       try {
         console.log("Obteniendo token reCAPTCHA para login...");
         const token = await window.grecaptcha.execute(
@@ -290,7 +362,15 @@ const RegisterForm = ({
         setUiState((prev) => ({ ...prev, loading: false }));
       }
     },
-    [formData, navigate, setUiState, resetForm]
+    [
+      setUiState,
+      formData.email,
+      formData.password,
+      navigate,
+      resetForm,
+      setIsLocked,
+      setLockExpiration,
+    ]
   );
 
   const checkLoginAttempts = async (email) => {
@@ -332,62 +412,6 @@ const RegisterForm = ({
       return true;
     }
   };
-
-  const updateLoginAttempts = async (email, success) => {
-    try {
-      const userRef = doc(db, "loginAttempts", email);
-      const userDoc = await getDoc(userRef);
-      const data = userDoc.exists()
-        ? userDoc.data()
-        : { attempts: 0, lockCount: 0 };
-
-      if (success) {
-        // Reiniciar intentos en caso de éxito
-        await setDoc(userRef, {
-          attempts: 0,
-          lockedUntil: null,
-          lockCount: 0, // Reiniciar contador de bloqueos en login exitoso
-        });
-        setIsLocked(false);
-        setLockExpiration(null);
-      } else {
-        const newAttempts = data.attempts + 1;
-
-        if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
-          const newLockCount = (data.lockCount || 0) + 1;
-          const multiplier = Math.min(newLockCount, MAX_LOCK_MULTIPLIER);
-          const lockDuration = BASE_LOCK_DURATION * multiplier;
-          const lockExpiration = new Date().getTime() + lockDuration;
-
-          await setDoc(userRef, {
-            attempts: newAttempts,
-            lockedUntil: lockExpiration,
-            lockCount: newLockCount,
-          });
-
-          setIsLocked(true);
-          setLockExpiration(lockExpiration);
-
-          const minutes = Math.ceil(lockDuration / 1000 / 60);
-          toast.error("Cuenta bloqueada temporalmente", {
-            description: `Demasiados intentos fallidos. Intente nuevamente en ${minutes} minutos.`,
-          });
-        } else {
-          await setDoc(userRef, {
-            ...data,
-            attempts: newAttempts,
-            lockedUntil: null,
-          });
-          toast.error(
-            `Intento fallido ${newAttempts} de ${MAX_LOGIN_ATTEMPTS}`
-          );
-        }
-      }
-    } catch (error) {
-      console.error("Error updating login attempts:", error);
-    }
-  };
-
   // Agregar efecto para actualizar el contador
   useEffect(() => {
     if (!isLocked || !lockExpiration) return;

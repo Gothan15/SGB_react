@@ -5,13 +5,16 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, Timestamp, updateDoc } from "firebase/firestore";
-
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Github } from "lucide-react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
+import { defaultRoutes } from "@/routes/index";
 
-const SocialLoginButtons = ({ setUiState, handleRedirect }) => {
+const SocialLoginButtons = ({ setUiState }) => {
+  const navigate = useNavigate();
+
   const handleSocialSignIn = async (provider, providerName) => {
     try {
       setUiState((prev) => ({ ...prev, loading: true }));
@@ -40,9 +43,7 @@ const SocialLoginButtons = ({ setUiState, handleRedirect }) => {
         };
 
         await setDoc(doc(db, "users", user.uid), userData);
-
-        // Establecer la redirección después de crear el documento
-        handleRedirect("student");
+        navigate(defaultRoutes.student, { replace: true });
       } else {
         // Usuario existente
         userData = userDoc.data();
@@ -51,9 +52,10 @@ const SocialLoginButtons = ({ setUiState, handleRedirect }) => {
         });
 
         // Usar el rol existente para la redirección
-        handleRedirect(userData.role);
+        navigate(defaultRoutes[userData.role] || "/null", { replace: true });
       }
     } catch (error) {
+      console.error("Detalles del error:", error);
       handleAuthError(error, setUiState);
     } finally {
       setUiState((prev) => ({ ...prev, loading: false }));
@@ -87,6 +89,8 @@ const SocialLoginButtons = ({ setUiState, handleRedirect }) => {
         "Ya existe una cuenta con este email usando otro método de inicio de sesión";
     } else if (error.code === "auth/popup-blocked") {
       errorMessage = "Ventana bloqueada por el navegador";
+    } else {
+      toast.error(`Error desconocido: ${error.message}`);
     }
 
     toast.error(errorMessage);
@@ -140,7 +144,6 @@ const SocialLoginButtons = ({ setUiState, handleRedirect }) => {
 
 SocialLoginButtons.propTypes = {
   setUiState: PropTypes.func.isRequired,
-  handleRedirect: PropTypes.func.isRequired,
 };
 
 export default SocialLoginButtons;

@@ -1,43 +1,61 @@
-import { useState, useEffect } from "react";
+import { functions } from "@/firebaseConfig";
+import { httpsCallable } from "firebase/functions";
 import { Calendar } from "lucide-react";
-import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const BlockedIPOverlay = ({ remainingTime, onExpiration }) => {
-  const [timeLeft, setTimeLeft] = useState(
-    Math.max(remainingTime - new Date().getTime(), 0)
-  );
+const BlockedIPOverlay = () => {
+  const navigate = useNavigate();
+  const [remainingSeconds, setRemainingSeconds] = useState(null);
 
-  const formatTime = (milliseconds) => {
-    const totalSeconds = Math.ceil(milliseconds / 1000);
+  const formatTime = (totalSeconds) => {
+    if (!totalSeconds) return "";
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return `${hours} horas ${minutes} minutos ${seconds} segundos`;
+
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  // Calcular el porcentaje para el círculo de progreso
+  useEffect(() => {
+    const checkIP = async () => {
+      try {
+        const ipResponse = await fetch("https://api.ipify.org?format=json");
+        const { ip } = await ipResponse.json();
+
+        const checkIpAttempts = httpsCallable(functions, "checkIpAttempts");
+        const { data } = await checkIpAttempts({ ip });
+
+        if (data.blocked) {
+          const seconds = Math.ceil(data.remainingTime / 1000);
+          setRemainingSeconds(seconds);
+        }
+      } catch (error) {
+        console.error("Error checking IP:", error);
+      }
+    };
+
+    checkIP();
+  }, []);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      onExpiration(); // Llamar a la función de limpieza
-      window.location.reload();
-      return;
-    }
+    if (!remainingSeconds) return;
 
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        const newTime = Math.max(prev - 1000, 0);
-        if (newTime <= 0) {
-          clearInterval(interval);
-          onExpiration(); // Llamar a la función de limpieza
-          window.location.reload();
+    const timer = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          navigate("/register");
+          return 0;
         }
-        return newTime;
+        return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [timeLeft, onExpiration]);
+    return () => clearInterval(timer);
+  }, [remainingSeconds, navigate]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -54,9 +72,11 @@ const BlockedIPOverlay = ({ remainingTime, onExpiration }) => {
             debido a múltiples intentos fallidos de inicio de sesión.
           </p>
 
-          <div className="text-yellow-500 font-mono text-xl">
-            Tiempo restante: {formatTime(timeLeft)}
-          </div>
+          {remainingSeconds > 0 && (
+            <p className="text-red-400 font-semibold text-lg">
+              Tiempo restante: {formatTime(remainingSeconds)}
+            </p>
+          )}
 
           <p className="text-gray-400 text-sm">
             Por favor, intente nuevamente más tarde o contacte al administrador
@@ -66,11 +86,6 @@ const BlockedIPOverlay = ({ remainingTime, onExpiration }) => {
       </div>
     </div>
   );
-};
-
-BlockedIPOverlay.propTypes = {
-  remainingTime: PropTypes.number.isRequired,
-  onExpiration: PropTypes.func.isRequired,
 };
 
 export default BlockedIPOverlay;

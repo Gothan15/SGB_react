@@ -12,6 +12,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import PropTypes from "prop-types";
+//import CardSoc from "./socials";
 
 const iconMap = {
   "Panel de Administración de la Biblioteca": LayoutDashboard,
@@ -34,29 +35,28 @@ export default function PanelHeader({ panelName, locationName }) {
   const IconLocation = iconMap[locationName] || LayoutDashboard;
 
   return (
-    <Card className="border-0 rounded-md bg-gradient-to-r from-primary to-primary-foreground shadow-lg">
+    <Card className="w-[60vw] border-0 rounded-md bg-gradient-to-r from-primary to-primary-foreground shadow-lg">
       <CardContent className="p-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Sección Principal */}
           <div className="flex items-center space-x-4">
             <div className="bg-white p-3 rounded-full shadow-md">
               <Icon className="h-8 w-8 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">{panelName}</h1>
-              <p className="text-sm text-white/80">
-                Bienvenido al panel de control
-              </p>
+              <div className="flex items-center text-white/80 space-x-2">
+                <IconLocation className="h-4 w-4" />
+                <span>/ {locationName}</span>
+              </div>
             </div>
-          </div>
-          <div className="mt-4 sm:mt-0 flex items-center space-x-2 text-white/80">
-            <IconLocation className="ml-2 text-black h-4 w-4" />
-            <span className="text-sm text-black">/ {locationName}</span>
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
 PanelHeader.propTypes = {
   panelName: PropTypes.string.isRequired,
   locationName: PropTypes.string.isRequired,

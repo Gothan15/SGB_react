@@ -1,14 +1,7 @@
-/* eslint-disable no-unused-vars */
 // Importaciones de React
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation, NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
-  Trash2 as TrashIcon2,
-  MessageSquare,
-  UserIcon,
-  Menu,
-  X,
-} from "lucide-react";
+import { UserIcon, Menu, X } from "lucide-react";
 // Importaciones externas
 import { toast } from "sonner";
 import {
@@ -19,7 +12,6 @@ import {
   onSnapshot,
   getDoc,
   getDocs,
-  writeBatch,
   orderBy,
   setDoc,
   deleteDoc,
@@ -27,13 +19,11 @@ import {
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { flexRender } from "@tanstack/react-table";
 import {
-  UsersIcon,
   CalendarIcon,
   BookIcon,
   ChevronsUpDown,
   ChevronUp,
   ChevronDown,
-  BarChart,
 } from "lucide-react";
 
 // Importaciones internas
@@ -46,7 +36,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import { AnimatePresence, motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -64,6 +54,7 @@ import LoadinSpinner from "./ui/LoadinSpinner";
 import Bubble from "./ui/Bubble";
 import Sidebar from "./ui/sidebar-dashboards";
 import ReauthDialog from "./ui/ReauthDialog";
+import FunFacts from "./ui/FunFacts";
 
 const BibPage = () => {
   const location = useLocation();
@@ -88,7 +79,7 @@ const BibPage = () => {
   });
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
-  const [IconLocation, seticonLocation] = useState("Reservas");
+  const [IconLocation, setIconLocation] = useState("Reservas");
   const [isFabOpen, setIsFabOpen] = useState(false);
   const inactivityTimeoutRef = useRef(null);
   const [showReauthDialog, setShowReauthDialog] = useState(false);
@@ -369,6 +360,16 @@ const BibPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const path = location.pathname.split("/").pop();
+    const locationMap = {
+      reservations: "Reservas",
+      books: "Libros",
+      account: "Mi Cuenta",
+    };
+    setIconLocation(locationMap[path] || "Reservas");
+  }, [location.pathname]);
+
   // Configuración de las tablas
   const handleSearch = (value, tableType) => {
     if (tableType === "users") {
@@ -465,11 +466,6 @@ const BibPage = () => {
     </>
   );
 
-  // Fix the click handlers for NavLinks
-  const handleNavLinkClick = (location) => {
-    seticonLocation(location);
-  };
-
   if (loading) {
     return <LoadinSpinner />;
   }
@@ -487,73 +483,24 @@ const BibPage = () => {
           }}
         />
       )}
-      <div className="w-full min-h-screen p-2 md:p-6 bg-black bg-opacity-30 backdrop-blur-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6">
-          <div className="w-full md:w-auto mb-4 md:mb-0 rounded-md shadow-md shadow-black">
+      <div className="md:w-full w-full min-h-screen mx-auto p-4 bg-black bg-opacity-30 backdrop-blur-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+          <div className="rounded-md shadow-md shadow-black w-[60%]">
             <PanelHeader
               panelName="Panel de Asistente"
               locationName={IconLocation}
             />
           </div>
-
-          <div className="w-full md:w-auto md:absolute md:left-[300px] md:ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
-            <WelcomeUser />
-          </div>
+          {/* <div className="w-[30%] h-[30%] md:w-[30%] md:h-[10%]">
+            <FunFacts />
+          </div> */}
         </div>
-
-        <Tabs value={location.pathname.split("/").pop()} className="space-y-4">
-          <TabsList className="   overflow-x-auto border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
-            <TabsTrigger value="reservations" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Reservas")}
-                to="reservations"
-                className="flex  hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                Reservas
-              </NavLink>
-            </TabsTrigger>
-
-            <TabsTrigger value="books" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Libros")}
-                to="books"
-                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <BookIcon className="mr-2 h-4 w-4" />
-                Libros
-              </NavLink>
-            </TabsTrigger>
-            <TabsTrigger value="account" asChild>
-              <NavLink
-                onClick={() => seticonLocation("Mi Cuenta")}
-                to="account"
-                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
-              >
-                <UserIcon className="mr-2 h-4 w-4" />
-                Mi Cuenta
-              </NavLink>
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="p-2 md:p-4">
-            <Outlet
-              context={{
-                data,
-                setData,
-                ui,
-                setUi,
-                renderTable, // Mantener renderTable en el contexto
-                loading,
-              }}
-            />
-          </div>
-        </Tabs>
+        <div className="w-full md:w-auto md:absolute md:left-[300px] md:ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
+          <WelcomeUser />
+        </div>
 
         {/* Botón flotante y sidebar */}
         <div className="fixed bottom-6 right-6 z-[9999]">
-          {" "}
-          {/* Cambiado el z-index y posición fija */}
           <button
             className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
               isFabOpen ? "rotate-45 scale-110" : ""
@@ -582,6 +529,128 @@ const BibPage = () => {
             userInfo={userData.userInfo}
           />
         </div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="bg-transparent bg-opacity-70 backdrop-blur-md shadow-lg rounded-md p-4"
+        >
+          <Tabs
+            value={location.pathname.split("/").pop()}
+            className="space-y-4"
+          >
+            <TabsList className="inline-flex p-1 bg-white/50 backdrop-blur-md shadow-lg rounded-full ">
+              {/* <TabsTrigger value="reservations" asChild>
+              <NavLink
+                onClick={() => handleNavLinkClick("Reservas")}
+                to="reservations"
+                className="flex  hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                Reservas
+              </NavLink>
+            </TabsTrigger> */}
+
+              <AnimatePresence>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="reservations" asChild>
+                    <NavLink
+                      to="reservations"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Reservas
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+
+                {/* <TabsTrigger value="books" asChild>
+              <NavLink
+                onClick={() => handleNavLinkClick("Libros")}
+                to="books"
+                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
+              >
+                <BookIcon className="mr-2 h-4 w-4" />
+                Libros
+              </NavLink>
+            </TabsTrigger> */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="books" asChild>
+                    <NavLink
+                      to="books"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <BookIcon className="mr-2 h-4 w-4" />
+                      Libros
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+                {/* <TabsTrigger value="account" asChild>
+              <NavLink
+                onClick={() => seticonLocation("Mi Cuenta")}
+                to="account"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
+              >
+                <UserIcon className="mr-2 h-4 w-4" />
+                Mi Cuenta
+              </NavLink>
+            </TabsTrigger> */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="account" asChild>
+                    <NavLink
+                      to="account"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Mi Cuenta
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+              </AnimatePresence>
+            </TabsList>
+
+            <div className="p-2 md:p-4">
+              <Outlet
+                context={{
+                  data,
+                  setData,
+                  ui,
+                  setUi,
+                  renderTable, // Mantener renderTable en el contexto
+                  loading,
+                }}
+              />
+            </div>
+          </Tabs>
+        </motion.div>
       </div>
     </>
   );

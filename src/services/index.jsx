@@ -1,5 +1,7 @@
+// filepath: /path/to/your/file
 /* eslint-disable react-refresh/only-export-components */
 /* eslint-disable no-unused-vars */
+import Error404 from "@/components/ui/error-404";
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
@@ -39,6 +41,7 @@ export const routes = {
   admin: adminTabs,
   atm: bibTabs,
   student: userTabs,
+  null: Error404,
 };
 
 export const defaultRoutes = {

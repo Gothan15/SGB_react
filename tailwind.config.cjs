@@ -1,8 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 const withMT = require("@material-tailwind/react/utils/withMT");
+const plugin = require("tailwindcss/plugin"); // Añadir esta línea
 
 module.exports = withMT({
-  darkMode: "class", // Esto permite cambiar entre temas usando la clase 'dark'
+  darkMode: ["class", "class"], // Esto permite cambiar entre temas usando la clase 'dark'
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -15,6 +16,11 @@ module.exports = withMT({
             opacity: "0",
           },
         },
+        glowingBorder: {
+          "0%": { "background-position": "0% center" },
+          "50%": { "background-position": "100% center" },
+          "100%": { "background-position": "0% center" },
+        },
         "fade-in": {
           "0%": {
             opacity: "0",
@@ -25,10 +31,106 @@ module.exports = withMT({
             transform: "translateY(0)",
           },
         },
+        dot1: {
+          "0%, 100%": {
+            "border-color": "#ca8a04", // yellow-600
+            transform:
+              "rotateX(24deg) rotateY(20deg) rotateZ(0deg) translateZ(-25px)",
+          },
+          "50%": {
+            "border-color": "#eab308", // yellow-500
+            transform:
+              "rotateX(20deg) rotateY(20deg) rotateZ(50deg) translateZ(0px)",
+          },
+        },
+        dot2: {
+          "0%, 100%": {
+            "border-color": "#facc15", // yellow-400
+            "box-shadow": "inset 0 0 15px 0 rgba(255, 255, 255, 0.2)",
+            transform:
+              "rotateX(24deg) rotateY(20deg) rotateZ(0deg) translateZ(-25px)",
+          },
+          "50%": {
+            "border-color": "#fde047", // yellow-300
+            "box-shadow": "inset 0 0 15px 0 rgba(255, 255, 255, 0.8)",
+            transform:
+              "rotateX(20deg) rotateY(20deg) rotateZ(50deg) translateZ(0px)",
+          },
+        },
+        dot3: {
+          "0%, 100%": {
+            "border-color": "#fef08a", // yellow-200
+            "box-shadow": "inset 0 0 15px 0 rgba(255, 255, 255, 0.1)",
+            transform:
+              "rotateX(24deg) rotateY(20deg) rotateZ(0deg) translateZ(-25px)",
+          },
+          "50%": {
+            "border-color": "#fef9c3", // yellow-100
+            "box-shadow": "inset 0 0 15px 0 rgba(255, 255, 255, 0.8)",
+            transform:
+              "rotateX(20deg) rotateY(20deg) rotateZ(50deg) translateZ(0px)",
+          },
+        },
+        orbit1: {
+          "0%": { transform: "rotate(0deg) translateX(60px) rotate(0deg)" },
+          "100%": {
+            transform: "rotate(360deg) translateX(60px) rotate(-360deg)",
+          },
+        },
+        orbit2: {
+          "0%": { transform: "rotate(90deg) translateX(60px) rotate(-90deg)" },
+          "100%": {
+            transform: "rotate(450deg) translateX(60px) rotate(-450deg)",
+          },
+        },
+        orbit3: {
+          "0%": {
+            transform: "rotate(180deg) translateX(60px) rotate(-180deg)",
+          },
+          "100%": {
+            transform: "rotate(540deg) translateX(60px) rotate(-540deg)",
+          },
+        },
+        orbit4: {
+          "0%": {
+            transform: "rotate(270deg) translateX(60px) rotate(-270deg)",
+          },
+          "100%": {
+            transform: "rotate(630deg) translateX(60px) rotate(-630deg)",
+          },
+        },
+        "slide-in-top": {
+          "0%": {
+            transform: "translateY(-50px)",
+            opacity: "0",
+          },
+          "100%": {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+        },
+        countdown: {
+          "0%": { backgroundColor: "#34d399" },
+          "100%": { backgroundColor: "#ef4444" },
+        },
       },
       animation: {
+        glowingBorder: "glowingBorder 2s linear infinite",
         "caret-blink": "caret-blink 1.25s ease-out infinite",
         "fade-in": "fade-in 0.5s ease-out",
+        dot1: "dot1 1666ms cubic-bezier(.49,.06,.43,.85) infinite",
+        dot2: "dot2 1666ms cubic-bezier(.49,.06,.43,.85) infinite 75ms",
+        dot3: "dot3 1666ms cubic-bezier(.49,.06,.43,.85) infinite 150ms",
+        "spin-slow": "spin 3s linear infinite",
+        orbit1: "orbit1 1.6666666s linear infinite",
+        orbit2: "orbit2 1.6666666s linear infinite",
+        orbit3: "orbit3 1.6666666s linear infinite",
+        orbit4: "orbit4 1.6666666s linear infinite",
+        "slide-in-top": "slide-in-top 0.3s both",
+        countdown: "countdown 5s ease-in-out infinite alternate",
+      },
+      backgroundSize: {
+        "200%": "200% auto",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -36,6 +138,8 @@ module.exports = withMT({
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        cyan: "#00FFFF",
+        blue: "#0000FF",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -87,7 +191,40 @@ module.exports = withMT({
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      transformStyle: {
+        "preserve-3d": "preserve-3d",
+      },
+      perspective: {
+        1000: "1000px",
+      },
+      rotate: {
+        "y-180": "rotateY(180deg)",
+      },
+      backfaceVisibility: {
+        hidden: "hidden",
+      },
+      transitionDuration: {
+        1000: "1000ms",
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        ".backface-hidden": {
+          "backface-visibility": "hidden",
+        },
+        ".perspective-1000": {
+          perspective: "1000px",
+        },
+        ".transform-style-preserve-3d": {
+          "transform-style": "preserve-3d",
+        },
+        ".rotate-y-180": {
+          transform: "rotateY(180deg)",
+        },
+      });
+    }),
+  ],
 });

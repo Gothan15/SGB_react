@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 "use client";
 
 import { useState } from "react";
@@ -12,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookIcon, CalendarIcon } from "lucide-react";
+import { BookIcon, CalendarIcon, Loader2 } from "lucide-react";
 
 import { toast } from "sonner";
 import { addDays, format } from "date-fns";
@@ -30,9 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
 export default function BookReservationForm({ onReserve, book }) {
   const [selectedDate, setSelectedDate] = useState(undefined);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Calculate minimum date (today) and maximum date (20 days from now)
   const today = new Date();
@@ -45,7 +50,11 @@ export default function BookReservationForm({ onReserve, book }) {
       toast.error("Por favor, selecciona una fecha de entrega");
       return;
     }
+    setIsSubmitting(true);
     onReserve(selectedDate);
+    setTimeout(() => {
+      setIsSubmitting(false);
+    }, 3000);
   };
 
   return (
@@ -69,33 +78,9 @@ export default function BookReservationForm({ onReserve, book }) {
               <strong>Autor:</strong> {book.author}
             </p>
           </div>
+          {/*
           <Popover>
             <PopoverTrigger asChild>
-              {/* <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? (
-                  format(selectedDate, "PPP")
-                ) : (
-                  <span>Selecciona una fecha</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < today || date > maxDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover> */}
               <Button
                 variant={"outline"}
                 className={cn(
@@ -143,9 +128,22 @@ export default function BookReservationForm({ onReserve, book }) {
               </div>
             </PopoverContent>
           </Popover>
+          */}
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            disabled={(date) => date < today || date > maxDate}
+            locale={es}
+            className="font-sans flex relative items-center justify-center"
+          />
           {selectedDate && (
             <p className="text-sm text-muted-foreground">
-              Fecha seleccionada: {format(selectedDate, "PPP", { locale: es })}
+              Fecha seleccionada:{" "}
+              {format(selectedDate, "PPP", { locale: es }).replace(
+                /(\b\w+\b)/g,
+                (word) => word.charAt(0).toUpperCase() + word.slice(1)
+              )}
             </p>
           )}
         </div>
@@ -154,9 +152,16 @@ export default function BookReservationForm({ onReserve, book }) {
         <Button
           className="w-full"
           onClick={handleSubmit}
-          disabled={!selectedDate}
+          disabled={!selectedDate || isSubmitting}
         >
-          Confirmar Reserva
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Procesando...
+            </>
+          ) : (
+            "Confirmar Reserva"
+          )}
         </Button>
       </CardFooter>
     </Card>

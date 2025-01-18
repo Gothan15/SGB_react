@@ -10,11 +10,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BookOpenIcon } from "lucide-react";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function BookReturnForm({ book, onReturn }) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsProcessing(true);
     onReturn(book);
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 3000);
   };
 
   return (
@@ -39,8 +47,19 @@ export default function BookReturnForm({ book, onReturn }) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handleSubmit}>
-          Confirmar Devolución
+        <Button
+          className="w-full"
+          onClick={handleSubmit}
+          disabled={isProcessing}
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Procesando...
+            </>
+          ) : (
+            "Confirmar Devolución"
+          )}
         </Button>
       </CardFooter>
     </Card>

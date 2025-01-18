@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  updateDoc,
+  doc,
+  writeBatch,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import { toast } from "sonner";
 import {
@@ -24,9 +31,16 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
-import { MessageSquare } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { MessageSquare, Trash2Icon } from "lucide-react";
+import Searchbar from "../ui/searchbutton";
 import { useOutletContext } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const SupportTab = () => {
   const [tickets, setTickets] = useState([]);
@@ -47,7 +61,6 @@ const SupportTab = () => {
     return () => unsubscribe();
   }, []);
   const { renderTable } = useOutletContext();
-  //const tickets = data.supportTickets || [];
 
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
@@ -74,6 +87,39 @@ const SupportTab = () => {
   const handleSearch = (value) => {
     setGlobalFilter(value);
     table.setGlobalFilter(value);
+  };
+
+  const handleClearTickets = async () => {
+    if (tickets.length === 0) {
+      toast.warning("No hay solicitudes que limpiar");
+      return;
+    }
+
+    if (
+      !confirm(
+        "¿Estás seguro de eliminar todas las solicitudes de soporte resueltas?"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const ticketsRef = collection(db, "support_tickets");
+      const querySnapshot = await getDocs(ticketsRef);
+      const batch = writeBatch(db);
+
+      querySnapshot.docs.forEach((doc) => {
+        if (doc.data().status === "resuelto") {
+          batch.delete(doc.ref);
+        }
+      });
+
+      await batch.commit();
+      toast.success("Solicitudes resueltas eliminadas exitosamente");
+    } catch (error) {
+      console.error("Error al limpiar solicitudes:", error);
+      toast.error("Error al eliminar las solicitudes");
+    }
   };
 
   const columns = [
@@ -153,15 +199,26 @@ const SupportTab = () => {
     state: {
       globalFilter,
     },
+    initialState: {
+      pagination: {
+        pageSize: 6,
+      },
+    },
   });
 
   return (
     <Card className="bg-gradient-to-br from-white to-gray-200 bg-opacity-100 shadow-black shadow-lg backdrop:blur-sm bg-white">
       <CardHeader className="p-4 md:p-6">
-        <CardTitle className="text-lg md:text-xl">Centro de Soporte</CardTitle>
-        <CardDescription className="text-sm md:text-base">
-          Gestiona y da seguimiento a los reportes de usuarios
-        </CardDescription>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <CardTitle className="text-lg md:text-xl">
+              Centro de Soporte
+            </CardTitle>
+            <CardDescription className="text-sm md:text-base">
+              Gestiona y da seguimiento a los reportes de usuarios
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="p-2 md:p-4 overflow-x-auto overflow-y-auto max-h-[70vh] md:max-h-[570px]">
         <div className="w-full min-w-[300px]">
@@ -176,19 +233,31 @@ const SupportTab = () => {
               </p>
             </div>
           ) : (
-            <>
-              <div className="flex flex-col space-y-2 mb-4">
-                <Input
-                  placeholder="Buscar en reportes..."
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <Searchbar
                   value={globalFilter}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full"
+                  placeholder="Buscar en reportes..."
                 />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button onClick={handleClearTickets}>
+                        <Trash2Icon className="mr-2 h-4 w-4" />
+                        Limpiar Resueltos
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Eliminar todas las solicitudes resueltas</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               <div className="overflow-x-auto -mx-2 md:mx-0">
                 {renderTable(table, "tickets")}
               </div>
-            </>
+            </div>
           )}
         </div>
       </CardContent>

@@ -46,6 +46,13 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 export default function ReservationHistory() {
   const [reservations, setReservations] = useState([]);
   const [sorting, setSorting] = useState([]);
@@ -109,7 +116,7 @@ export default function ReservationHistory() {
     getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       pagination: {
-        pageSize: 8,
+        pageSize: 99,
       },
     },
   });
@@ -242,10 +249,19 @@ export default function ReservationHistory() {
               Tu historial de reservas de libros.
             </CardDescription>
           </div>
-          <Button onClick={handleClearHistory}>
-            <Trash2Icon className="mr-2 h-4 w-4" />
-            Limpiar Historial
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button onClick={handleClearHistory}>
+                  <Trash2Icon className="mr-2 h-4 w-4" />
+                  Limpiar Historial
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Eliminar todo el historial de préstamos</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </CardHeader>
       <CardContent className="overflow-y-auto max-h-[570px]">
@@ -261,7 +277,7 @@ export default function ReservationHistory() {
           </div>
         ) : (
           <div className="rounded-md border">
-            <Table className="w-full overflow-x-auto">
+            <Table className="w-full h-full overflow-x-auto overflow-y-auto">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
