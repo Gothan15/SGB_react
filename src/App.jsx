@@ -1,5 +1,5 @@
 // Importaciones de react , react-router-dom, firebase y sonner
-import { Suspense, lazy } from "react";
+import { lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState, memo } from "react";
@@ -11,7 +11,7 @@ import { SidebarProvider } from "./components/ui/sidebar";
 import { LoadingScreen } from "./components/ui/LoadingScreen";
 import PrivateRoute from "./components/PrivateRoute";
 import { routes, defaultRoutes } from "./routes";
-import PageLoader from "./components/ui/PageLoader";
+
 import PasswordResetForm from "./components/auth/PasswordResetForm";
 
 // Importaciones dinámicas
@@ -70,79 +70,79 @@ function App() {
         <BrowserRouter
           future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
         >
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {/* Rutas públicas */}
-              <Route path="/" element={<Home />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/reset-password" element={<PasswordResetForm />} />
-              <Route path="/null" element={<routes.null />} />
-
-              {/* Rutas protegidas */}
+          <Routes>
+            {/* Rutas públicas */}
+            <Route path="/" element={<Home />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<PasswordResetForm />} />
+            <Route path="/null" element={<routes.null />} />
+            <Route path="/blocked" element={<routes.blocked />} />
+            {/* Rutas protegidas */}
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute userRole={userRole} requiredRole="admin">
+                  <AdminPage />
+                </PrivateRoute>
+              }
+            >
               <Route
-                path="/admin"
-                element={
-                  <PrivateRoute userRole={userRole} requiredRole="admin">
-                    <AdminPage />
-                  </PrivateRoute>
-                }
-              >
+                index
+                element={<Navigate to={defaultRoutes.admin} replace />}
+              />
+              {Object.entries(routes.admin).map(([name, Component]) => (
                 <Route
-                  index
-                  element={<Navigate to={defaultRoutes.admin} replace />}
+                  key={name}
+                  path={name.toLowerCase()}
+                  element={<Component />}
                 />
-                {Object.entries(routes.admin).map(([name, Component]) => (
-                  <Route
-                    key={name}
-                    path={name.toLowerCase()}
-                    element={<Component />}
-                  />
-                ))}
-              </Route>
+              ))}
+            </Route>
 
+            <Route
+              path="/atm"
+              element={
+                <PrivateRoute userRole={userRole} requiredRole="atm">
+                  <BibPage />
+                </PrivateRoute>
+              }
+            >
               <Route
-                path="/atm"
-                element={
-                  <PrivateRoute userRole={userRole} requiredRole="atm">
-                    <BibPage />
-                  </PrivateRoute>
-                }
-              >
+                index
+                element={<Navigate to={defaultRoutes.atm} replace />}
+              />
+              {Object.entries(routes.atm).map(([name, Component]) => (
                 <Route
-                  index
-                  element={<Navigate to={defaultRoutes.atm} replace />}
+                  key={name}
+                  path={name.toLowerCase()}
+                  element={<Component />}
                 />
-                {Object.entries(routes.atm).map(([name, Component]) => (
-                  <Route
-                    key={name}
-                    path={name.toLowerCase()}
-                    element={<Component />}
-                  />
-                ))}
-              </Route>
+              ))}
+            </Route>
 
+            <Route
+              path="/student"
+              element={
+                <PrivateRoute userRole={userRole} requiredRole="student">
+                  <UserDashboard />
+                </PrivateRoute>
+              }
+            >
               <Route
-                path="/student"
-                element={
-                  <PrivateRoute userRole={userRole} requiredRole="student">
-                    <UserDashboard />
-                  </PrivateRoute>
-                }
-              >
+                index
+                element={<Navigate to={defaultRoutes.student} replace />}
+              />
+              {Object.entries(routes.student).map(([name, Component]) => (
                 <Route
-                  index
-                  element={<Navigate to={defaultRoutes.student} replace />}
+                  key={name}
+                  path={name.toLowerCase()}
+                  element={<Component />}
                 />
-                {Object.entries(routes.student).map(([name, Component]) => (
-                  <Route
-                    key={name}
-                    path={name.toLowerCase()}
-                    element={<Component />}
-                  />
-                ))}
-              </Route>
-            </Routes>
-          </Suspense>
+              ))}
+            </Route>
+            {/* Ruta comodín para capturar todas las rutas no encontradas */}
+            <Route path="*" element={<Navigate to="/null" replace />} />
+          </Routes>
         </BrowserRouter>
       </SidebarProvider>
     </div>

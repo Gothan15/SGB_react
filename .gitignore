@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+ebda-7e856-firebase-adminsdk-7s7tw-e317353f08.json*
 node_modules
 dist
 dist-ssr

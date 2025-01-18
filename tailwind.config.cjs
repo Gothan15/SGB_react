@@ -16,6 +16,11 @@ module.exports = withMT({
             opacity: "0",
           },
         },
+        glowingBorder: {
+          "0%": { "background-position": "0% center" },
+          "50%": { "background-position": "100% center" },
+          "100%": { "background-position": "0% center" },
+        },
         "fade-in": {
           "0%": {
             opacity: "0",
@@ -94,8 +99,23 @@ module.exports = withMT({
             transform: "rotate(630deg) translateX(60px) rotate(-630deg)",
           },
         },
+        "slide-in-top": {
+          "0%": {
+            transform: "translateY(-50px)",
+            opacity: "0",
+          },
+          "100%": {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+        },
+        countdown: {
+          "0%": { backgroundColor: "#34d399" },
+          "100%": { backgroundColor: "#ef4444" },
+        },
       },
       animation: {
+        glowingBorder: "glowingBorder 2s linear infinite",
         "caret-blink": "caret-blink 1.25s ease-out infinite",
         "fade-in": "fade-in 0.5s ease-out",
         dot1: "dot1 1666ms cubic-bezier(.49,.06,.43,.85) infinite",
@@ -106,6 +126,11 @@ module.exports = withMT({
         orbit2: "orbit2 1.6666666s linear infinite",
         orbit3: "orbit3 1.6666666s linear infinite",
         orbit4: "orbit4 1.6666666s linear infinite",
+        "slide-in-top": "slide-in-top 0.3s both",
+        countdown: "countdown 5s ease-in-out infinite alternate",
+      },
+      backgroundSize: {
+        "200%": "200% auto",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -113,6 +138,8 @@ module.exports = withMT({
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        cyan: "#00FFFF",
+        blue: "#0000FF",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

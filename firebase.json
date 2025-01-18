@@ -5,11 +5,7 @@
   },
   "hosting": {
     "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
         "source": "**/*.@(js|css|html|json)",
@@ -63,5 +59,8 @@
         "*.local"
       ]
     }
-  ]
+  ],
+  "schedule": {
+    "checkExpiringReservations": "every 24 hours"
+  }
 }

@@ -51,7 +51,7 @@ import PanelHeader from "./ui/panel-header";
 import Sidebar from "./ui/sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 import ReauthDialog from "./ui/ReauthDialog";
-import FunFacts from "./ui/FunFacts";
+//import FunFacts from "./ui/FunFacts";
 
 const UserDashboard = () => {
   const location = useLocation();
@@ -369,9 +369,9 @@ const UserDashboard = () => {
                 locationName={locationName}
               />
             </div>
-            <div className="w-[30%] h-[30%] md:w-[30%] md:h-[10%]">
+            {/* <div className="w-[30%] h-[30%] md:w-[30%] md:h-[10%]">
               <FunFacts />
-            </div>
+            </div> */}
           </div>
 
           <div className="absolute left-4 md:left-[300px] ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
@@ -520,6 +520,9 @@ const UserDashboard = () => {
               </div>
             </Tabs>
           </motion.div>
+          {/* <footer className="absolute bottom-0   p-4 text-center text-white bg-blue-800">
+            &copy; 2025 Biblioteca Digital. Todos los derechos reservados.
+          </footer> */}
           <ChatButton />
         </div>
       </UserContext.Provider>

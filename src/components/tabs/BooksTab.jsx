@@ -64,8 +64,9 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { Input } from "../ui/input";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import Searchbar from "../ui/searchbutton";
 
 const BooksTab = () => {
   const { ui, setUi, data, setData } = useOutletContext();
@@ -372,13 +373,15 @@ const BooksTab = () => {
   const renderTable = (table, tableType) => (
     <>
       {tableType !== "tickets" && (
-        <div className="flex items-center space-x-2 mb-4">
-          <Input
-            placeholder="Buscar libro..."
-            className="w-auto md:w-auto max-w-sm"
-            value={booksTable.getState().globalFilter ?? ""}
-            onChange={(e) => handleSearch(e.target.value, "books")}
-          />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <Searchbar
+              value={booksTable.getState().globalFilter ?? ""}
+              onChange={(e) => handleSearch(e.target.value, "books")}
+              placeholder="Buscar libro por título o autor..."
+            />
+            {/* ...existing pagination code... */}
+          </div>
         </div>
       )}
       <div className="rounded-md border">

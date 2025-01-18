@@ -53,6 +53,8 @@ import Sidebar from "./ui/sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 
 import ReauthDialog from "./ui/ReauthDialog";
+import FunFacts from "./ui/FunFacts";
+import { AnimatePresence, motion } from "framer-motion";
 
 const AdminPage = () => {
   const location = useLocation();
@@ -455,10 +457,16 @@ const AdminPage = () => {
     </>
   );
 
-  // Fix the click handlers for NavLinks
-  const handleNavLinkClick = (location) => {
-    seticonLocation(location);
-  };
+  useEffect(() => {
+    const path = location.pathname.split("/").pop();
+    const locationMap = {
+      users: "Usuarios",
+      reports: "Informes",
+      support: "Soporte",
+      account: "Mi Cuenta",
+    };
+    seticonLocation(locationMap[path] || "Usuarios");
+  }, [location.pathname]);
 
   if (loading) {
     return <LoadinSpinner />;
@@ -485,75 +493,16 @@ const AdminPage = () => {
               locationName={IconLocation}
             />
           </div>
-
-          <div className="w-full md:absolute md:left-[300px] md:ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
-            <WelcomeUser />
-          </div>
+          {/* <div className="w-[30%] h-[30%] md:w-[30%] md:h-[10%]">
+            <FunFacts />
+          </div> */}
         </div>
 
-        <Tabs value={location.pathname.split("/").pop()} className="space-y-4">
-          <TabsList className=" overflow-x-auto flex-nowrap border-0 bg-white bg-opacity-70 backdrop-blur shadow-lg shadow-black">
-            <TabsTrigger value="users" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Usuarios")}
-                to="users"
-                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <UsersIcon className="mr-2 h-4 w-4" />
-                Usuarios
-              </NavLink>
-            </TabsTrigger>
-
-            <TabsTrigger value="reports" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Informes")}
-                to="reports"
-                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <BarChart className="mr-2 h-4 w-4" />
-                Informes
-              </NavLink>
-            </TabsTrigger>
-            <TabsTrigger value="support" asChild>
-              <NavLink
-                onClick={() => handleNavLinkClick("Soporte")}
-                to="support"
-                className="flex hover:bg-white hover:shadow-black hover:shadow-lg  hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Soporte
-              </NavLink>
-            </TabsTrigger>
-            <TabsTrigger value="account" asChild>
-              <NavLink
-                onClick={() => seticonLocation("Mi Cuenta")}
-                to="account"
-                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
-              >
-                <UserIcon className="mr-2 h-4 w-4" />
-                Mi Cuenta
-              </NavLink>
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="p-2 md:p-4">
-            <Outlet
-              context={{
-                data,
-                setData,
-                ui,
-                setUi,
-                renderTable, // Mantener renderTable en el contexto
-                loading,
-              }}
-            />
-          </div>
-        </Tabs>
-
+        <div className="w-full md:absolute md:left-[300px] md:ml-4 rounded-md shadow-md shadow-black font-semibold text-black">
+          <WelcomeUser />
+        </div>
         {/* Botón flotante y sidebar */}
         <div className="fixed bottom-6 right-6 z-[9999]">
-          {" "}
-          {/* Cambiado el z-index y posición fija */}
           <button
             className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
               isFabOpen ? "rotate-45 scale-110" : ""
@@ -582,6 +531,155 @@ const AdminPage = () => {
             userInfo={userData.userInfo}
           />
         </div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="bg-transparent bg-opacity-70 backdrop-blur-md shadow-lg rounded-md p-4"
+        >
+          <Tabs
+            value={location.pathname.split("/").pop()}
+            className="space-y-4"
+          >
+            <TabsList className="inline-flex p-1 bg-white/50 backdrop-blur-md shadow-lg rounded-full ">
+              <AnimatePresence>
+                {/* <TabsTrigger value="users" asChild>
+              <NavLink
+                to="users"
+                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
+              >
+                <UsersIcon className="mr-2 h-4 w-4" />
+                Usuarios
+              </NavLink>
+            </TabsTrigger> */}
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="users" asChild>
+                    <NavLink
+                      to="users"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <UsersIcon className="mr-2 h-4 w-4" />
+                      Usuarios
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+
+                {/* <TabsTrigger value="reports" asChild>
+              <NavLink
+                to="reports"
+                className="flex hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
+              >
+                <BarChart className="mr-2 h-4 w-4" />
+                Informes
+              </NavLink>
+            </TabsTrigger> */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="reports" asChild>
+                    <NavLink
+                      to="reports"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <BarChart className="mr-2 h-4 w-4" />
+                      Informes
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+                {/* <TabsTrigger value="support" asChild>
+              <NavLink
+                to="support"
+                className="flex hover:bg-white hover:shadow-black hover:shadow-lg  hover:text-black hover:border-0 hover:border-black items-center bg-opacity-90"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Soporte
+              </NavLink>
+            </TabsTrigger> */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="support" asChild>
+                    <NavLink
+                      to="support"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Soporte
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+                {/* <TabsTrigger value="account" asChild>
+              <NavLink
+                to="account"
+                className="flex hover:bg-opacity-100 hover:shadow-black hover:shadow-lg hover:bg-white hover:text-black items-center bg-opacity-90"
+              >
+                <UserIcon className="mr-2 h-4 w-4" />
+                Mi Cuenta
+              </NavLink>
+            </TabsTrigger>
+          </TabsList> */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TabsTrigger value="account" asChild>
+                    <NavLink
+                      to="account"
+                      className={({ isActive }) =>
+                        `flex items-center px-4 py-2 rounded-full transition-all ${
+                          isActive
+                            ? "bg-black text-white shadow-md"
+                            : "hover:bg-gray-100"
+                        }`
+                      }
+                    >
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Mi Cuenta
+                    </NavLink>
+                  </TabsTrigger>
+                </motion.div>
+              </AnimatePresence>
+            </TabsList>
+
+            <div className="p-2 md:p-4">
+              <Outlet
+                context={{
+                  data,
+                  setData,
+                  ui,
+                  setUi,
+                  renderTable, // Mantener renderTable en el contexto
+                  loading,
+                }}
+              />
+            </div>
+          </Tabs>
+        </motion.div>
       </div>
     </>
   );

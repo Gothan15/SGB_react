@@ -7,10 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+
 import { Button } from "@/components/ui/button";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronsUpDown,
   ChevronUp,
   Trash2Icon,
@@ -58,6 +60,7 @@ import {
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/firebaseConfig"; // Asegúrate de exportar functions desde firebaseConfig
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Searchbar from "../ui/searchbutton";
 
 const UsersTab = () => {
   const { data, setData } = useOutletContext();
@@ -248,10 +251,8 @@ const UsersTab = () => {
     },
   ];
 
-  const handleSearch = (value, tableType) => {
-    if (tableType === "users") {
-      usersTable.setGlobalFilter(value);
-    }
+  const handleSearch = (e) => {
+    usersTable.setGlobalFilter(e.target.value);
   };
 
   const usersTable = useReactTable({
@@ -264,7 +265,7 @@ const UsersTab = () => {
     initialState: {
       globalFilter: "",
       pagination: {
-        pageSize: 10,
+        pageSize: 6,
       },
     },
   });
@@ -280,15 +281,16 @@ const UsersTab = () => {
   const renderTable = (table, tableType) => (
     <>
       {tableType !== "tickets" && (
-        <div className="flex items-center space-x-2 mb-4">
-          <Input
-            placeholder={`Buscar ${
-              tableType === "users" ? "usuario" : "libro"
-            }...`}
-            className="w-auto  max-w-sm"
-            value={table.getState().globalFilter ?? ""}
-            onChange={(e) => handleSearch(e.target.value, tableType)}
-          />
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Searchbar
+                value={table.getState().globalFilter ?? ""}
+                onChange={(e) => handleSearch(e)}
+                placeholder="Buscar usuario..."
+              />
+            </div>
+          </div>
         </div>
       )}
       <div className="rounded-md border">
@@ -321,35 +323,80 @@ const UsersTab = () => {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={userColumns.length}
+                  className="h-24 text-center"
+                >
+                  No se encontraron resultados.
+                </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Anterior
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Siguiente
-        </Button>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex items-center gap-4">
+          <Select
+            value={table.getState().pagination.pageSize.toString()}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value));
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Registros por página" />
+            </SelectTrigger>
+            <SelectContent>
+              {[6, 12, 24, 48, 86].map((pageSize) => (
+                <SelectItem key={pageSize} value={pageSize.toString()}>
+                  Mostrar {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="text-sm text-muted-foreground">
+            Mostrando {table.getState().pagination.pageSize} de{" "}
+            {table.getFilteredRowModel().rows.length} registro(s)
+          </div>
+        </div>
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center justify-center text-sm font-medium">
+              Página {table.getState().pagination.pageIndex + 1} de{" "}
+              {table.getPageCount()}
+            </div>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </>
   );

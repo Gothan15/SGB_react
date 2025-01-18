@@ -12,6 +12,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import PropTypes from "prop-types";
+//import CardSoc from "./socials";
 
 const iconMap = {
   "Panel de Administración de la Biblioteca": LayoutDashboard,

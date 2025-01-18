@@ -1,4 +1,3 @@
-// filepath: /path/to/your/file
 /* eslint-disable no-unused-vars */
 import Error404 from "@/components/ui/error-404";
 import { lazy } from "react";
@@ -36,11 +35,39 @@ const userTabs = {
   Account: lazy(() => import("@/components/tabs/AccountInfo")),
 };
 
+const BlockedIPOverlay = lazy(() => import("@/components/ui/BlockedIPOverlay"));
+
 export const routes = {
   admin: adminTabs,
   atm: bibTabs,
   student: userTabs,
   null: Error404,
+  blocked: BlockedIPOverlay,
+};
+
+// Nueva función para verificar rutas nulas
+export const isNullPath = (path) => {
+  return path.split("/").some((segment) => segment === "null");
+};
+
+// Función para verificar si una ruta existe
+export const isValidRoute = (role, tab) => {
+  if (!role || !routes[role]) return false;
+  if (role === "null") return false;
+  if (!tab) return true;
+  return Object.keys(routes[role]).includes(tab);
+};
+
+export const getRouteComponent = (role, tab) => {
+  if (isNullPath(role + "/" + (tab || ""))) {
+    return Error404;
+  }
+
+  if (!isValidRoute(role, tab)) {
+    return Error404;
+  }
+
+  return routes[role][tab] || routes[role];
 };
 
 export const defaultRoutes = {
