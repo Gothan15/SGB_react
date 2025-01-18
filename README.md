@@ -66,14 +66,14 @@ npm run dev
 
 ## 📱 Capturas de Pantalla
 
-![Bienvenida](/screenshots/welcome.png)
+![Bienvenida](/screenshots/dashboard.png)
 _Página de bienvenida y dashboard principal_
+
+![Inicio](/screenshots/loans.png)
+\_Sistema de gestión de inicio de sesion
 
 ![Catálogo](/screenshots/catalog.png)
 _Catálogo de libros con sistema de búsqueda_
-
-![Préstamos](/screenshots/loans.png)
-_Sistema de gestión de préstamos_
 
 ## 👥 Roles de Usuario
 
