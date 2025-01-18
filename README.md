@@ -70,7 +70,7 @@ npm run dev
 _Página de bienvenida y dashboard principal_
 
 ![Inicio](/screenshots/loans.png)
-\_Sistema de gestión de inicio de sesion
+_Sistema de gestión de inicio de sesion
 
 ![Catálogo](/screenshots/catalog.png)
 _Catálogo de libros con sistema de búsqueda_
