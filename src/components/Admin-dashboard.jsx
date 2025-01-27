@@ -53,7 +53,7 @@ import Sidebar from "./ui/sidebar-dashboards";
 import Bubble from "./ui/Bubble";
 
 import ReauthDialog from "./ui/ReauthDialog";
-import FunFacts from "./ui/FunFacts";
+//import FunFacts from "./ui/FunFacts";
 import { AnimatePresence, motion } from "framer-motion";
 
 const AdminPage = () => {

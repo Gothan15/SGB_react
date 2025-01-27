@@ -25,4 +25,4 @@ async function verifyAdminRole(uid) {
 }
 
 // Reemplaza 'UID_DEL_USUARIO' con el UID del usuario que deseas verificar
-verifyAdminRole("oGKXvotdOqZwnliIy3eOsGXvCl63");
+verifyAdminRole("FsgIDUihoogcJPvBvPZNTVw82sy2");

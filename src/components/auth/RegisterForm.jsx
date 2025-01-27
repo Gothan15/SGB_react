@@ -47,16 +47,7 @@ import FormInput from "./FormInput";
 import validatePassword from "./validatePassword"; // Importar validatePassword
 import { httpsCallable } from "firebase/functions";
 
-const RegisterForm = ({
-  uiState,
-  setUiState,
-  isLocked,
-  setIsLocked,
-  lockExpiration,
-  setLockExpiration,
-  remainingTime,
-  setRemainingTime,
-}) => {
+const RegisterForm = ({ uiState, setUiState }) => {
   const initialFormData = React.useMemo(
     () => ({
       email: "",
@@ -103,6 +94,8 @@ const RegisterForm = ({
     message: "",
     color: "",
   });
+
+  const [blockTimeRemaining, setBlockTimeRemaining] = useState(null);
 
   const navigate = useNavigate();
 
@@ -159,34 +152,20 @@ const RegisterForm = ({
           return;
         }
 
-        const userCredential = await createUserWithEmailAndPassword(
+        const validatedData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        };
+        const cfnCreateUser = httpsCallable(functions, "createUser");
+        const { data: result } = await cfnCreateUser(validatedData);
+
+        await signInWithEmailAndPassword(
           auth,
           formData.email,
           formData.password
         );
-
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          email: formData.email,
-          name: formData.name,
-          role: formData.role,
-          memberSince: Timestamp.fromDate(new Date()),
-          passwordLastChanged: null,
-          requiresPasswordChange: true,
-          passwordExpiresAt: Timestamp.fromDate(
-            new Date(
-              Date.now() + PASSWORD_CONFIG.MAX_AGE_DAYS * 24 * 60 * 60 * 1000
-            )
-          ),
-        });
-
-        await setDoc(doc(db, "passwordHistory", userCredential.user.uid), {
-          passwords: [
-            {
-              hash: formData.password,
-              createdAt: Timestamp.fromDate(new Date()),
-            },
-          ],
-        });
 
         navigate(`/${formData.role}`, { replace: true });
       } catch (err) {
@@ -225,238 +204,100 @@ const RegisterForm = ({
     [formData, navigate, setUiState, resetForm]
   );
 
-  // Maneja el inicio de sesión
+  const [isLocked, setIsLocked] = useState(false);
+  // Modifica la parte del manejo de error en handleLogin
+  useEffect(() => {
+    console.log("Estado actual de isLocked:", isLocked);
+  }, [isLocked]);
   const handleLogin = useCallback(
     async (e) => {
       e.preventDefault();
       setUiState((prev) => ({ ...prev, loading: true }));
 
-      // Obtener IP del usuario
-      const ipResponse = await fetch("https://api.ipify.org?format=json");
-      const { ip } = await ipResponse.json();
-
-      // Verificar intentos de la IP
-      const checkIpAttempts = httpsCallable(functions, "checkIpAttempts");
-      const { data } = await checkIpAttempts({ ip });
-
-      if (data.blocked) {
-        navigate("/blocked");
-        return;
-      }
-
-      const updateLoginAttempts = async (email, success) => {
-        try {
-          const userRef = doc(db, "loginAttempts", email);
-          const userDoc = await getDoc(userRef);
-          const data = userDoc.exists()
-            ? userDoc.data()
-            : { attempts: 0, lockCount: 0 };
-
-          if (success) {
-            await setDoc(userRef, {
-              attempts: 0,
-              lockedUntil: null,
-              lockCount: 0,
-            });
-            setIsLocked(false);
-            setLockExpiration(null);
-          } else {
-            const newAttempts = data.attempts + 1;
-
-            if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
-              const newLockCount = (data.lockCount || 0) + 1;
-              const multiplier = Math.min(newLockCount, MAX_LOCK_MULTIPLIER);
-              const lockDuration = BASE_LOCK_DURATION * multiplier;
-              const lockExpiration = new Date().getTime() + lockDuration;
-
-              await setDoc(userRef, {
-                attempts: newAttempts,
-                lockedUntil: lockExpiration,
-                lockCount: newLockCount,
-              });
-
-              setIsLocked(true);
-              setLockExpiration(lockExpiration);
-
-              const minutes = Math.ceil(lockDuration / 1000 / 60);
-              toast.error("Cuenta bloqueada temporalmente", {
-                description: `Demasiados intentos fallidos. Intente nuevamente en ${minutes} minutos.`,
-              });
-            } else {
-              await setDoc(userRef, {
-                ...data,
-                attempts: newAttempts,
-                lockedUntil: null,
-              });
-              toast.error(
-                `Intento fallido ${newAttempts} de ${MAX_LOGIN_ATTEMPTS}`
-              );
-            }
-          }
-        } catch (error) {
-          console.error("Error updating login attempts:", error);
-        }
-      };
-
       try {
-        console.log("Obteniendo token reCAPTCHA para login...");
         const token = await window.grecaptcha.execute(
           "6LcpypkqAAAAANjqYhsE6expeptIsK1JH6ucYEwE",
           { action: "login" }
         );
-        console.log("Estado del token:", token ? "Presente" : "Ausente");
 
         if (!token) {
-          console.warn("Intento de login sin token reCAPTCHA");
           toast.error("Por favor verifica que no eres un robot");
           return;
         }
 
+        // Intentar el inicio de sesión
         const userCredential = await signInWithEmailAndPassword(
           auth,
           formData.email,
           formData.password
         );
 
-        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+        // Si el login es exitoso, navegar según el rol
 
+        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
         if (userDoc.exists()) {
           const role = userDoc.data().role;
           navigate(`/${role}`, { replace: true });
         }
-      } catch (err) {
-        if (err.code === "auth/popup-closed-by-user") {
-          resetForm();
-          setUiState((prev) => ({
-            ...prev,
-            error: "",
-            loading: false,
-          }));
-          return;
+      } catch (error) {
+        try {
+          // Obtener IP del usuario
+          const ipResponse = await fetch("https://api.ipify.org?format=json");
+          const { ip } = await ipResponse.json();
+
+          // Llamar a handleFailedLogin
+          const handleFailedLoginFn = httpsCallable(
+            functions,
+            "handleFailedLogin"
+          );
+          const result = await handleFailedLoginFn({
+            email: formData.email,
+            ip,
+          });
+          if (result.data.disabled) {
+            setIsLocked(true);
+            toast.error(result.data.message);
+            // Usar result.data.disabled para deshabilitar inputs si se desea
+            return;
+          }
+        } catch (lockError) {
+          if (lockError.code === "functions/permission-denied") {
+            console.log("Cuenta bloqueada:", lockError.message);
+            const timeMatch = lockError.message.match(/(\d+) segundos/);
+            if (timeMatch) {
+              setBlockTimeRemaining(parseInt(timeMatch[1]));
+              const timer = setInterval(() => {
+                setBlockTimeRemaining((prev) => {
+                  if (prev <= 1) {
+                    clearInterval(timer);
+                    return null;
+                  }
+                  return prev - 1;
+                });
+              }, 1000);
+
+              // Limpiar el temporizador cuando el componente se desmonte
+              return () => clearInterval(timer);
+            }
+            toast.error(lockError.message);
+          } else {
+            toast.error("Error en el inicio de sesión");
+          }
         }
-        let errorMessage;
-        switch (err.code) {
-          case "auth/user-not-found":
-            errorMessage = "Usuario no encontrado";
-            break;
-          case "auth/wrong-password":
-            errorMessage = "Contraseña incorrecta";
-            break;
-          case "auth/invalid-email":
-            errorMessage = "Formato de correo electrónico inválido";
-            break;
-          case "auth/user-disabled":
-            errorMessage = "Esta cuenta ha sido deshabilitada";
-            break;
-          default:
-            errorMessage = "Error al iniciar sesión";
-            break;
-        }
-        setUiState((prevState) => ({
-          ...prevState,
-          error: errorMessage,
-          loading: false,
-        }));
-        await updateLoginAttempts(formData.email, false);
       } finally {
         setUiState((prev) => ({ ...prev, loading: false }));
       }
     },
-    [
-      setUiState,
-      formData.email,
-      formData.password,
-      navigate,
-      resetForm,
-      setIsLocked,
-      setLockExpiration,
-    ]
+    [formData.email, formData.password, navigate, setUiState]
   );
-
-  const checkLoginAttempts = async (email) => {
-    try {
-      const userRef = doc(db, "loginAttempts", email);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const { attempts, lockedUntil, lockCount = 0 } = userDoc.data();
-
-        // Verificar si está bloqueado
-        if (lockedUntil && new Date().getTime() < lockedUntil) {
-          setIsLocked(true);
-          setLockExpiration(lockedUntil);
-          return false;
-        }
-
-        // Reiniciar bloqueo si ya expiró
-        if (lockedUntil && new Date().getTime() >= lockedUntil) {
-          await setDoc(userRef, {
-            attempts: 0,
-            lockedUntil: null,
-            lockCount: lockCount, // Mantener el contador de bloqueos
-          });
-          setIsLocked(false);
-          setLockExpiration(null);
-        }
-      } else {
-        // Crear registro inicial
-        await setDoc(userRef, {
-          attempts: 0,
-          lockedUntil: null,
-          lockCount: 0,
-        });
-      }
-      return true;
-    } catch (error) {
-      console.error("Error checking login attempts:", error);
-      return true;
-    }
-  };
-  // Agregar efecto para actualizar el contador
-  useEffect(() => {
-    if (!isLocked || !lockExpiration) return;
-
-    const intervalId = setInterval(() => {
-      const remaining = Math.max(
-        0,
-        Math.ceil((lockExpiration - Date.now()) / 1000)
-      );
-
-      if (remaining <= 0) {
-        setIsLocked(false);
-        setLockExpiration(null);
-        setRemainingTime(0);
-        clearInterval(intervalId);
-      } else {
-        setRemainingTime(remaining);
-      }
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [
-    isLocked,
-    lockExpiration,
-    setIsLocked,
-    setLockExpiration,
-    setRemainingTime,
-  ]);
-
-  // Función auxiliar para formatear el tiempo
-  const formatTime = useCallback((seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  }, []);
 
   // Agregar función para verificar email con useCallback
   const validateEmail = useCallback(async (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isValidFormat = emailRegex.test(email);
-
-    if (!isValidFormat) {
+    if (!emailRegex.test(email)) {
       setEmailValidation({
         isValid: false,
-        isAvailable: true,
+        isAvailable: false,
         message: "Formato de correo inválido",
         color: "text-red-500",
       });
@@ -464,21 +305,21 @@ const RegisterForm = ({
     }
 
     try {
-      const q = query(collection(db, "users"), where("email", "==", email));
-      const querySnapshot = await getDocs(q);
-
-      const isAvailable = querySnapshot.empty;
+      // Llamar a Cloud Function en lugar de acceder directamente a Firestore
+      const checkEmail = httpsCallable(functions, "checkEmailAvailability");
+      const result = await checkEmail({ email });
 
       setEmailValidation({
         isValid: true,
-        isAvailable,
-        message: isAvailable
+        isAvailable: result.data.isAvailable,
+        message: result.data.isAvailable
           ? "Correo disponible"
           : "Este correo ya está registrado",
-        color: isAvailable ? "text-green-500" : "text-red-500",
+        color: result.data.isAvailable ? "text-green-500" : "text-red-500",
       });
     } catch (error) {
       console.error("Error validando email:", error);
+      toast.error("Error al verificar disponibilidad del correo");
     }
   }, []);
 
@@ -544,6 +385,11 @@ const RegisterForm = ({
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-2 md:gap-3 space-y-4">
+        {blockTimeRemaining && (
+          <div className="text-red-500 text-center">
+            Cuenta bloqueada. Tiempo restante: {blockTimeRemaining} segundos
+          </div>
+        )}
         {uiState.newUser && (
           <FormInput
             type="text"
@@ -553,6 +399,7 @@ const RegisterForm = ({
             value={formData.name}
             onChange={handleChange}
             icon={BiUser}
+            disabled={isLocked}
           />
         )}
 
@@ -568,6 +415,7 @@ const RegisterForm = ({
             uiState.newUser && formData.email ? emailValidation.message : ""
           }
           validationColor={emailValidation.color}
+          disabled={isLocked}
         />
 
         <FormInput
@@ -609,6 +457,7 @@ const RegisterForm = ({
               </div>
             )
           }
+          disabled={isLocked}
         />
 
         {uiState.newUser && (
@@ -636,13 +485,17 @@ const RegisterForm = ({
         <SocialLoginButtons
           setUiState={setUiState}
           handleRedirect={handleRedirect}
+          disabled={isLocked}
         />
 
         {/* Botones de registro/inicio de sesión */}
         {uiState.newUser ? (
           <Button
             type="submit"
-            className="w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
+            className={`w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2 ${
+              isLocked ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={isLocked}
           >
             <UserPlus className="h-5 w-5" />
             Registrarse
@@ -650,7 +503,10 @@ const RegisterForm = ({
         ) : (
           <Button
             type="submit"
-            className="w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2"
+            className={`w-full shadow-sm shadow-black hover:border-2 hover:border-white bg-white font-semibold text-black hover:bg-[#5d6770] hover:bg-opacity-50 hover:text-white transition-colors duration-300 flex items-center justify-center gap-2 ${
+              isLocked ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={isLocked}
           >
             <LogIn className="h-5 w-5" />
             Inicia Sesión
@@ -661,26 +517,26 @@ const RegisterForm = ({
         <div className="mx-5 text-center rounded-md border-b-2 border-white text-zinc-400">
           {uiState.newUser ? (
             <>
-              <Label className="text-white mr-3">Ya tienes cuenta?</Label>
+              <Label className="text-white mr-3">¿Ya tienes cuenta?</Label>
               <Label
                 onClick={() =>
                   setUiState((prev) => ({ ...prev, newUser: false, error: "" }))
                 }
                 className="text-yellow-500 hover:underline font-bold cursor-pointer"
               >
-                Inicia Sesión!
+                ¡Inicia Sesión!
               </Label>
             </>
           ) : (
             <>
-              <span className="text-white mr-3">No tienes cuenta?</span>
+              <span className="text-white mr-3">¿No tienes cuenta?</span>
               <span
                 onClick={() =>
                   setUiState((prev) => ({ ...prev, newUser: true, error: "" }))
                 }
                 className="text-yellow-500 hover:underline font-bold cursor-pointer"
               >
-                Regístrate!
+                ¡Regístrate!
               </span>
             </>
           )}
@@ -699,18 +555,11 @@ const RegisterForm = ({
         )}
       </form>
 
-      {/* Mensajes de error y bloqueo */}
+      {/* Mensajes de error */}
       {uiState.error && (
-        <p className="bg-red-800 text-white text-center p-1 uppercase font-bold mt-3 mb-1 rounded-md">
+        <p className="bg-red-800 text-white text-center p-2 uppercase font-bold mt-3 mb-1 rounded-md">
           {uiState.error}
         </p>
-      )}
-      {isLocked && (
-        <div className="bg-red-800 text-white text-center p-1 uppercase font-bold mt-3 mb-1 rounded-md">
-          Cuenta bloqueada temporalmente. Intente nuevamente en{" "}
-          <span className="font-bold">{formatTime(remainingTime)}</span>{" "}
-          minutos.
-        </div>
       )}
 
       <div className="p-4">
@@ -724,30 +573,8 @@ RegisterForm.propTypes = {
   uiState: PropTypes.shape({
     newUser: PropTypes.bool,
     error: PropTypes.string,
-    // Otros campos si los hay
   }).isRequired,
   setUiState: PropTypes.func.isRequired,
-  isLocked: PropTypes.bool.isRequired,
-  setIsLocked: PropTypes.func.isRequired,
-  lockExpiration: PropTypes.instanceOf(Date),
-  setLockExpiration: PropTypes.func.isRequired,
-  remainingTime: PropTypes.number,
-  setRemainingTime: PropTypes.func.isRequired,
-};
-
-FormInput.propTypes = {
-  type: PropTypes.string.isRequired,
-  id: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  label: PropTypes.string,
-  icon: PropTypes.elementType,
-  showPasswordToggle: PropTypes.bool,
-  isPasswordVisible: PropTypes.bool,
-  togglePassword: PropTypes.func,
-  validationMessage: PropTypes.string,
-  validationColor: PropTypes.string,
 };
 
 export default RegisterForm;

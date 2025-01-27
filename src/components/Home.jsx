@@ -18,10 +18,10 @@ import {
   ArrowRightCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const Home = () => {
   const navigate = useNavigate();
+
   return (
     <div className="min-h-screen w-full sm:w-[100%] md:w-[1920px] bg-opacity-30 bg-black flex flex-col">
       <header className="bg-white shadow-md shadow-black bg-opacity-90">

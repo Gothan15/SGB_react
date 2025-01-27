@@ -398,6 +398,51 @@ const UsersTab = () => {
           </div>
         </div>
       </div>
+      <div className="sticky bottom-0 bg-white/90 backdrop-blur-sm py-4">
+        {table.getPageCount() > 1 && (
+          <div className="flex justify-center gap-2 pb-8">
+            <Button
+              variant="outline"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="text-gray-700 border-gray-300 hover:bg-gray-100"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-2">
+              {Array.from(
+                { length: table.getPageCount() },
+                (_, i) => i + 1
+              ).map((page) => (
+                <Button
+                  key={page}
+                  variant={
+                    table.getState().pagination.pageIndex + 1 === page
+                      ? "default"
+                      : "outline"
+                  }
+                  onClick={() => table.setPageIndex(page - 1)}
+                  className={`w-10 ${
+                    table.getState().pagination.pageIndex + 1 === page
+                      ? "bg-black text-white hover:bg-black"
+                      : "text-gray-700 border-gray-300 hover:bg-gray-100"
+                  }`}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="text-gray-700 border-gray-300 hover:bg-gray-100"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
     </>
   );
 

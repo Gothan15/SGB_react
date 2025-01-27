@@ -381,36 +381,6 @@ const UserDashboard = () => {
             />
           </div>
 
-          <div className="fixed bottom-6 right-6 z-[9999]">
-            <button
-              className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
-                isFabOpen ? "rotate-45 scale-110" : ""
-              }`}
-              onClick={() => setIsFabOpen(!isFabOpen)}
-            >
-              {notifications.length > 0 && (
-                <Bubble
-                  className="absolute left-0 top-0 bg-red-500 text-white rounded-full p-1"
-                  count={notifications.length}
-                />
-              )}
-              {isFabOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-            <Sidebar
-              MenuName={"Opciones de Usuario"}
-              isOpen={isFabOpen}
-              onClose={() => setIsFabOpen(false)}
-              notifications={notifications}
-              setNotifications={setNotifications}
-              userProfile={userData.userProfile}
-              userInfo={userData.userInfo}
-              passwordStatus={passwordStatus} // Pasar el estado de la contraseña
-            />
-          </div>
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -520,9 +490,36 @@ const UserDashboard = () => {
               </div>
             </Tabs>
           </motion.div>
-          {/* <footer className="absolute bottom-0   p-4 text-center text-white bg-blue-800">
-            &copy; 2025 Biblioteca Digital. Todos los derechos reservados.
-          </footer> */}
+          <div className="fixed bottom-6 right-6 z-[9999]">
+            <button
+              className={`bg-primary text-primary-foreground rounded-full p-4 shadow-lg transition-all duration-300 ease-in-out ${
+                isFabOpen ? "rotate-45 scale-110" : ""
+              }`}
+              onClick={() => setIsFabOpen(!isFabOpen)}
+            >
+              {notifications.length > 0 && (
+                <Bubble
+                  className="absolute left-0 top-0 bg-red-500 text-white rounded-full p-1"
+                  count={notifications.length}
+                />
+              )}
+              {isFabOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+            <Sidebar
+              MenuName={"Opciones de Usuario"}
+              isOpen={isFabOpen}
+              onClose={() => setIsFabOpen(false)}
+              notifications={notifications}
+              setNotifications={setNotifications}
+              userProfile={userData.userProfile}
+              userInfo={userData.userInfo}
+              passwordStatus={passwordStatus} // Pasar el estado de la contraseña
+            />
+          </div>
           <ChatButton />
         </div>
       </UserContext.Provider>

@@ -19,17 +19,21 @@ const FormInput = ({
   togglePassword,
   validationMessage,
   validationColor,
+  disabled,
 }) => (
   <div className="relative text-base md:text-2xl focus:outline-none focus:ring-0">
     <Input
       type={type}
       id={id}
       name={name}
-      className="w-full py-2 px-0 text-base md:text-xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:focus:border-yellow-500 focus:outline-none focus:ring-0 focus:text-white focus:border-yellow-600 peer"
+      className={`w-full py-2 px-0 text-base md:text-xl text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:focus:border-yellow-500 focus:outline-none focus:ring-0 focus:text-white focus:border-yellow-600 peer ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      }`}
       placeholder=""
       required
       value={value}
       onChange={onChange}
+      disabled={disabled}
     />
     <label
       htmlFor={id}
@@ -45,7 +49,7 @@ const FormInput = ({
         <button
           type="button"
           onClick={togglePassword}
-          className="text-white hover:text-yellow-500 transition-colors"
+          className="text-white hover:text-yellow-500 transition-colors cursor-pointer"
         >
           {isPasswordVisible ? (
             <AiOutlineEyeInvisible className="text-2xl" />
@@ -75,6 +79,7 @@ FormInput.propTypes = {
   togglePassword: PropTypes.func,
   validationMessage: PropTypes.string,
   validationColor: PropTypes.string,
+  disabled: PropTypes.bool,
 };
 
 export default FormInput;

@@ -12,7 +12,7 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { defaultRoutes } from "@/routes/index";
 
-const SocialLoginButtons = ({ setUiState }) => {
+const SocialLoginButtons = ({ setUiState, disabled }) => {
   const navigate = useNavigate();
 
   const handleSocialSignIn = async (provider, providerName) => {
@@ -118,7 +118,10 @@ const SocialLoginButtons = ({ setUiState }) => {
           onClick={handleGoogleSignIn}
           type="button"
           variant="outline"
-          className="w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300"
+          disabled={disabled}
+          className={`w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300 ${
+            disabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <img
             src="https://www.google.com/favicon.ico"
@@ -132,7 +135,10 @@ const SocialLoginButtons = ({ setUiState }) => {
           onClick={handleGithubSignIn}
           type="button"
           variant="outline"
-          className="w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300"
+          disabled={disabled}
+          className={`w-full shadow-sm shadow-black bg-black font-semibold text-white hover:bg-white hover:bg-opacity-50 hover:text-black transition-colors duration-300 ${
+            disabled ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <Github className="mr-2 h-4 w-4" />
           Continuar con GitHub
@@ -144,6 +150,7 @@ const SocialLoginButtons = ({ setUiState }) => {
 
 SocialLoginButtons.propTypes = {
   setUiState: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
 };
 
 export default SocialLoginButtons;

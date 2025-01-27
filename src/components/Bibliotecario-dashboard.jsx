@@ -54,7 +54,7 @@ import LoadinSpinner from "./ui/LoadinSpinner";
 import Bubble from "./ui/Bubble";
 import Sidebar from "./ui/sidebar-dashboards";
 import ReauthDialog from "./ui/ReauthDialog";
-import FunFacts from "./ui/FunFacts";
+//import FunFacts from "./ui/FunFacts";
 
 const BibPage = () => {
   const location = useLocation();

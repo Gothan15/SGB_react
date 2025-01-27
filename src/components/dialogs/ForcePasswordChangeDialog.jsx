@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { auth, db, PASSWORD_CONFIG } from "@/firebaseConfig";
@@ -106,11 +106,11 @@ const ForcePasswordChangeDialog = ({ isOpen, onClose }) => {
     };
 
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cambio de contraseña requerido</DialogTitle>
-          </DialogHeader>
+      <AlertDialog open={isOpen} onOpenChange={onClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambio de contraseña requerido</AlertDialogTitle>
+          </AlertDialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="password"
@@ -159,8 +159,8 @@ const ForcePasswordChangeDialog = ({ isOpen, onClose }) => {
               )}
             </Button>
           </form>
-        </DialogContent>
-      </Dialog>
+        </AlertDialogContent>
+      </AlertDialog>
     );
   }
 };

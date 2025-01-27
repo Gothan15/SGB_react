@@ -50,4 +50,4 @@ async function assignAdminRole(uid) {
 }
 
 // Reemplaza 'UID_DEL_USUARIO' con el UID del usuario al que quieres asignar el rol
-assignAdminRole("oGKXvotdOqZwnliIy3eOsGXvCl63");
+assignAdminRole("pf50glzaujfFwuCkI1rDUvL8Kp53");

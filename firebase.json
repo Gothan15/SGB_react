@@ -61,6 +61,7 @@
     }
   ],
   "schedule": {
-    "checkExpiringReservations": "every 24 hours"
+    "checkExpiringReservations": "0 */12 * * *",
+    "checkOverdueReservations": "0 */12 * * *"
   }
 }
