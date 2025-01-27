@@ -10,6 +10,7 @@ ebda-7e856-firebase-adminsdk-7s7tw-e317353f08.json*
 node_modules
 dist
 dist-ssr
+scripts
 *.local
 *.cjs
 *.bat
